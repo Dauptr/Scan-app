@@ -3,85 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NULIS Console Launcher</title>
+    <title>NEXUS Console Launcher</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Added JSZip for creating zip files in browser -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0a0e14;
-            --bg-secondary: #111922;
-            --fg: #e6e6e6;
-            --muted: #5c6773;
-            --accent: #00ff9d;
-            --accent-dim: rgba(0, 255, 157, 0.15);
-            --warning: #ff6b35;
-            --card: rgba(17, 25, 34, 0.8);
-            --border: rgba(0, 255, 157, 0.2);
-            --glow: 0 0 20px rgba(0, 255, 157, 0.3);
+            --bg: #000001; --bg-secondary: #0a0e14; --fg: #e6e6e6; --muted: #5c6773;
+            --accent: #00f0ff; --accent-dim: rgba(0, 240, 255, 0.15);
+            --secondary: #ff00aa; --warning: #ff6b35;
+            --border: rgba(0, 240, 255, 0.2);
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'JetBrains Mono', monospace; background: var(--bg); color: var(--fg); min-height: 100vh; overflow-x: hidden; }
 
-        body {
-            font-family: 'JetBrains Mono', monospace;
-            background: var(--bg);
-            color: var(--fg);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+        /* BOOT SCREEN */
+        #boot-screen { position: fixed; inset: 0; z-index: 9999; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
+        #boot-screen.hidden { opacity: 0; pointer-events: none; }
+        .boot-logo { font-family: 'Space Grotesk', sans-serif; font-size: 6rem; font-weight: bold; color: var(--accent); text-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent); margin-bottom: 1rem; }
+        .boot-sub { color: var(--secondary); letter-spacing: 0.3em; font-size: 0.8rem; margin-bottom: 3rem; animation: pulse 2s infinite; }
+        .boot-log-container { width: 300px; height: 100px; overflow: hidden; margin-bottom: 2rem; font-size: 0.7rem; color: var(--accent); opacity: 0.8; }
+        .boot-progress-track { width: 300px; height: 4px; background: rgba(0, 240, 255, 0.1); border-radius: 2px; overflow: hidden; }
+        .boot-progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--secondary)); width: 0%; transition: width 0.2s; box-shadow: 0 0 10px var(--accent); }
+        .boot-progress-text { margin-top: 0.5rem; font-size: 0.7rem; color: var(--muted); }
 
-        .bg-grid {
-            position: fixed; inset: 0;
-            background-image: 
-                linear-gradient(rgba(0, 255, 157, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 255, 157, 0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
-            animation: gridMove 20s linear infinite;
-            pointer-events: none; z-index: 0;
-        }
-
+        /* MAIN UI */
+        .bg-grid { position: fixed; inset: 0; background-image: linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px); background-size: 50px 50px; animation: gridMove 20s linear infinite; pointer-events: none; z-index: 0; }
         @keyframes gridMove { 0% { transform: translate(0, 0); } 100% { transform: translate(50px, 50px); } }
-
-        .orb {
-            position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.4; pointer-events: none; z-index: 0;
-        }
-        .orb-1 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(0, 255, 157, 0.3) 0%, transparent 70%); top: -100px; right: -100px; animation: float1 15s ease-in-out infinite; }
-        .orb-2 { width: 300px; height: 300px; background: radial-gradient(circle, rgba(255, 107, 53, 0.2) 0%, transparent 70%); bottom: -50px; left: -50px; animation: float2 18s ease-in-out infinite; }
-
+        .orb { position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.4; pointer-events: none; z-index: 0; }
+        .orb-1 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(0, 240, 255, 0.3) 0%, transparent 70%); top: -100px; right: -100px; animation: float1 15s ease-in-out infinite; }
+        .orb-2 { width: 300px; height: 300px; background: radial-gradient(circle, rgba(255, 0, 170, 0.2) 0%, transparent 70%); bottom: -50px; left: -50px; animation: float2 18s ease-in-out infinite; }
         @keyframes float1 { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-50px, 50px) scale(1.1); } }
         @keyframes float2 { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(30px, -30px) scale(0.9); } }
+        .scanlines { position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.1) 2px, rgba(0, 0, 0, 0.1) 4px); pointer-events: none; z-index: 1000; opacity: 0.3; }
 
-        .scanlines {
-            position: fixed; inset: 0;
-            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.1) 2px, rgba(0, 0, 0, 0.1) 4px);
-            pointer-events: none; z-index: 1000; opacity: 0.3;
-        }
-
-        .header {
-            position: relative; z-index: 10; padding: 1rem 2rem;
-            border-bottom: 1px solid var(--border);
-            backdrop-filter: blur(10px);
-            background: rgba(10, 14, 20, 0.8);
-        }
-
+        .header { position: relative; z-index: 10; padding: 1rem 2rem; border-bottom: 1px solid var(--border); backdrop-filter: blur(10px); background: rgba(0, 0, 0, 0.8); }
         .logo { font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; color: var(--accent); }
         .logo span { color: var(--fg); }
-
-        .scan-btn {
-            display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem;
-            background: linear-gradient(135deg, var(--accent) 0%, #00cc7d 100%);
-            color: var(--bg); border: none; border-radius: 6px;
-            font-family: inherit; font-size: 0.8rem; font-weight: 600;
-            cursor: pointer; transition: all 0.3s ease;
-            box-shadow: 0 0 20px rgba(0, 255, 157, 0.3);
-        }
-        .scan-btn:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(0, 255, 157, 0.5); }
-        .scan-btn:active { transform: translateY(0); }
+        .scan-btn { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: linear-gradient(135deg, var(--accent) 0%, #00cc7d 100%); color: var(--bg); border: none; border-radius: 6px; font-family: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 0 15px rgba(0, 240, 255, 0.3); }
+        .scan-btn:hover { transform: translateY(-2px); box-shadow: 0 0 25px rgba(0, 240, 255, 0.5); }
         .scan-btn.scanning { animation: pulse-glow 1s ease-in-out infinite; }
-
-        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 157, 0.3); } 50% { box-shadow: 0 0 40px rgba(0, 255, 157, 0.6); } }
+        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(0, 240, 255, 0.3); } 50% { box-shadow: 0 0 40px rgba(0, 240, 255, 0.6); } }
 
         .main-container { position: relative; z-index: 10; display: grid; grid-template-columns: 280px 1fr; gap: 0; height: calc(100vh - 60px); }
         @media (max-width: 768px) { .main-container { grid-template-columns: 1fr; } .sidebar { display: none; } }
@@ -89,14 +51,9 @@
         .sidebar { background: var(--bg-secondary); border-right: 1px solid var(--border); overflow-y: auto; padding: 1rem 0; }
         .sidebar-section { padding: 0.5rem 1rem; margin-bottom: 1rem; }
         .sidebar-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.75rem; }
-        
         .file-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; margin-bottom: 2px; font-size: 0.85rem; }
         .file-item:hover { background: var(--accent-dim); }
         .file-item.active { background: var(--accent-dim); border-left: 2px solid var(--accent); }
-        .file-icon { width: 16px; height: 16px; opacity: 0.7; }
-        .file-icon.folder { color: #f0c674; }
-        .file-icon.file { color: var(--accent); }
-        .file-icon.link { color: var(--warning); }
 
         .console-area { display: flex; flex-direction: column; background: var(--bg); }
         .tab-bar { display: flex; align-items: center; background: var(--bg-secondary); border-bottom: 1px solid var(--border); padding: 0 0.5rem; min-height: 40px; }
@@ -107,8 +64,9 @@
         .terminal-output { flex: 1; overflow-y: auto; padding: 1.5rem; font-size: 0.85rem; line-height: 1.6; }
         .terminal-line { margin-bottom: 0.25rem; opacity: 0; animation: fadeInUp 0.3s ease forwards; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        .prompt { color: var(--accent); }
+        .prompt { color: var(--secondary); }
         .command { color: var(--fg); }
         .output { color: var(--muted); padding-left: 0; }
         .output.success { color: var(--accent); }
@@ -116,51 +74,38 @@
         .output.info { color: #66d9ef; }
         .output.highlight { color: #f0c674; }
 
-        .file-listing { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.5rem; margin: 0.5rem 0; padding: 0.5rem; background: rgba(0, 0, 0, 0.2); border-radius: 6px; border: 1px solid var(--border); }
-        .file-entry { display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer; transition: all 0.15s ease; }
-        .file-entry:hover { background: var(--accent-dim); }
-        .file-name { color: var(--fg); }
-        .file-name.executable { color: var(--accent); }
-        .file-name.directory { color: #f0c674; }
-
         .input-area { display: flex; align-items: center; padding: 1rem 1.5rem; background: rgba(0, 0, 0, 0.3); border-top: 1px solid var(--border); }
-        .input-prompt { color: var(--accent); margin-right: 0.75rem; white-space: nowrap; }
+        .input-prompt { color: var(--secondary); margin-right: 0.75rem; white-space: nowrap; }
         .input-field { flex: 1; background: transparent; border: none; outline: none; color: var(--fg); font-family: inherit; font-size: 0.85rem; caret-color: var(--accent); }
-        .input-field::placeholder { color: var(--muted); }
 
         .app-viewer { display: none; flex: 1; flex-direction: column; }
         .app-viewer.active { display: flex; }
         .app-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: var(--bg-secondary); border-bottom: 1px solid var(--border); }
-        .app-title { font-size: 0.85rem; color: var(--fg); }
-        .app-url { font-size: 0.75rem; color: var(--muted); }
-        .app-actions { display: flex; gap: 0.5rem; }
-        .app-btn { padding: 0.35rem 0.75rem; font-size: 0.75rem; border-radius: 4px; border: 1px solid var(--border); background: transparent; color: var(--fg); cursor: pointer; transition: all 0.2s ease; font-family: inherit; }
-        .app-btn:hover { background: var(--accent-dim); border-color: var(--accent); }
-        .app-btn.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
-        .app-btn.primary:hover { filter: brightness(1.1); }
-
         .app-frame-container { flex: 1; position: relative; background: #000; }
         .app-frame { width: 100%; height: 100%; border: none; }
         .loading-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); z-index: 10; transition: opacity 0.3s ease; }
         .loading-overlay.hidden { opacity: 0; pointer-events: none; }
         .loader { width: 40px; height: 40px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-text { margin-top: 1rem; color: var(--muted); font-size: 0.8rem; }
 
         .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: pulse 2s ease-in-out infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: var(--bg); }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(0, 255, 157, 0.4); }
-
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
-        }
     </style>
 </head>
 <body>
+    <!-- BOOT SCREEN -->
+    <div id="boot-screen">
+        <div class="boot-logo">NEXUS</div>
+        <div class="boot-sub">SYSTEM INITIALIZATION</div>
+        <div class="boot-log-container" id="boot-log"></div>
+        <div class="boot-progress-track">
+            <div class="boot-progress-bar" id="boot-progress"></div>
+        </div>
+        <div class="boot-progress-text" id="boot-status">0% Complete</div>
+    </div>
+
     <div class="bg-grid"></div>
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
@@ -168,18 +113,15 @@
 
     <header class="header">
         <div class="flex items-center justify-between">
-            <div class="logo"><span>NULIS</span> Console</div>
+            <div class="logo"><span>NEXUS</span> Engine</div>
             <div class="flex items-center gap-4">
                 <button class="scan-btn" id="scan-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                    Scan Space Code
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    Clone Repo
                 </button>
                 <div class="flex items-center gap-2">
                     <div class="status-dot"></div>
-                    <span class="text-xs text-[var(--muted)]">Connected</span>
+                    <span class="text-xs text-[var(--muted)]">Linked</span>
                 </div>
             </div>
         </div>
@@ -188,76 +130,50 @@
     <main class="main-container">
         <aside class="sidebar">
             <div class="sidebar-section">
-                <div class="sidebar-title">Explorer</div>
+                <div class="sidebar-title">Control</div>
                 <div class="file-item active" data-view="console">
-                    <svg class="file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line>
-                    </svg>
+                    <svg class="file-icon" style="width:16px;height:16px;opacity:0.7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
                     <span>Terminal</span>
                 </div>
                 <div class="file-item" data-view="app">
-                    <svg class="file-icon link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                    </svg>
-                    <span>Space App</span>
+                    <svg class="file-icon" style="width:16px;height:16px;opacity:0.7;color:var(--secondary)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    <span>Live App</span>
                 </div>
             </div>
             <div class="sidebar-section">
-                <div class="sidebar-title">Files</div>
-                <div id="file-tree"></div>
-            </div>
-            <div class="sidebar-section">
-                <div class="sidebar-title">Spaces</div>
-                <div class="file-item" data-space="main">
-                    <svg class="file-icon folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                    <span>main-space</span>
-                </div>
+                <div class="sidebar-title">Repository</div>
+                <div id="file-tree" class="text-xs text-gray-600 pl-2">Run 'clone' to init repo.</div>
             </div>
         </aside>
 
         <section class="console-area">
             <div class="tab-bar">
-                <div class="tab active" data-tab="console">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line>
-                    </svg>
-                    Console
-                </div>
-                <div class="tab" data-tab="app">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line>
-                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                    </svg>
-                    Space App
-                </div>
+                <div class="tab active" data-tab="console">Console</div>
+                <div class="tab" data-tab="app">App Viewer</div>
             </div>
 
             <div class="terminal-output" id="terminal"></div>
 
             <div class="input-area">
-                <span class="input-prompt">nulis@console:~$</span>
-                <input type="text" class="input-field" id="input" placeholder="Type 'scan' or 'help'..." autocomplete="off" spellcheck="false">
+                <span class="input-prompt">nexus@os:~$</span>
+                <input type="text" class="input-field" id="input" placeholder="Type 'help'..." autocomplete="off" spellcheck="false">
             </div>
 
             <div class="app-viewer" id="app-viewer">
                 <div class="app-header">
                     <div>
-                        <div class="app-title">Space Application</div>
-                        <div class="app-url" id="app-url">https://s12eh1dx2vs1-d.space.z.ai/</div>
+                        <div class="text-sm text-white">Live Application</div>
+                        <div class="text-xs text-gray-500" id="app-url">https://s12eh1dx2vs1-d.space.z.ai/</div>
                     </div>
-                    <div class="app-actions">
-                        <button class="app-btn" id="refresh-btn">Refresh</button>
-                        <button class="app-btn" id="open-btn">Open External</button>
-                        <button class="app-btn primary" id="close-btn">Close</button>
+                    <div class="flex gap-2">
+                        <button class="scan-btn" style="font-size:0.7rem; padding: 0.25rem 0.5rem;" id="refresh-btn">Refresh</button>
+                        <button class="scan-btn" style="font-size:0.7rem; padding: 0.25rem 0.5rem; background: var(--secondary);" id="close-btn">Close</button>
                     </div>
                 </div>
                 <div class="app-frame-container">
                     <div class="loading-overlay" id="loading">
                         <div class="loader"></div>
-                        <div class="loading-text">Loading Space...</div>
+                        <div class="text-xs text-gray-500 mt-2">Loading Space...</div>
                     </div>
                     <iframe class="app-frame" id="app-frame" src="" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
                 </div>
@@ -266,316 +182,252 @@
     </main>
 
     <script>
-        const APP_URL = 'https://s12eh1dx2vs1-d.space.z.ai/';
-
-        // Simulated file system with content for zipping
-        const fileSystem = {
-            '/': { type: 'directory', children: ['nulis/', 'config/', 'deploy/', 'readme.md', 'start.sh'] },
-            '/nulis': { type: 'directory', children: ['main.js', 'utils.js', 'styles.css', 'app.link'] },
-            '/config': { type: 'directory', children: ['settings.json', 'env.config'] },
-            '/deploy': { type: 'directory', children: ['space.yaml', 'dockerfile', 'entrypoint.sh'] },
-            '/readme.md': { type: 'file', content: '# NULIS Console Launcher\n\nDeployed from space.z.ai' },
-            '/start.sh': { type: 'file', content: '#!/bin/bash\n./nulis/main.js' },
-            '/nulis/main.js': { type: 'file', content: '// Main application entry point\nconsole.log("NULIS Console v1.0.0");' },
-            '/nulis/utils.js': { type: 'file', content: '// Utility functions\nexport const formatDate = (d) => d.toISOString();' },
-            '/nulis/styles.css': { type: 'file', content: '/* Main styles */\n.container { max-width: 1200px; }' },
-            '/nulis/app.link': { type: 'link', target: APP_URL },
-            '/config/settings.json': { type: 'file', content: '{\n  "theme": "dark",\n  "version": "1.0.0"\n}' },
-            '/config/env.config': { type: 'file', content: 'NODE_ENV=production\nAPI_URL=https://api.space.z.ai' },
-            '/deploy/space.yaml': { type: 'file', content: 'space:\n  name: nulis-console\n  domain: s12eh1dx2vs1-d.space.z.ai' },
-            '/deploy/dockerfile': { type: 'file', content: 'FROM node:18-alpine\nWORKDIR /app\nCOPY . .' },
-            '/deploy/entrypoint.sh': { type: 'file', content: '#!/bin/sh\nnode nulis/main.js' }
+        const REPO_URL = 'http://github.com/Dauptr/space.z.ai.git';
+        const LIVE_URL = 'https://s12eh1dx2vs1-d.space.z.ai/';
+        const REPO_NAME = 'space.z.ai';
+        
+        // Simulated File System State
+        let fileSystemState = {
+            'package.json': JSON.stringify({ name: "space-z-ai", scripts: { build: "next build" } }, null, 2),
+            'index.html': '<!DOCTYPE html><html lang="en"><head><title>Z.ai</title></head><body><h1 style="color:#00f0ff">NEXUS OS</h1></body></html>'
         };
 
-        // Rich code structure for the "Scan" feature
-        const scannedCode = {
-            'src/': {
-                type: 'directory',
-                children: {
-                    'index.ts': { type: 'typescript', content: 'import { App } from "./App";\n\nconst root = document.getElementById("root");\nif (root) {\n  new App(root).init();\n}' },
-                    'App.tsx': { type: 'typescript', content: 'export class App {\n  constructor(el) { this.el = el; }\n  init() { console.log("App Initialized"); }\n}' },
-                    'components/': {
-                        type: 'directory',
-                        children: {
-                            'Console.tsx': { type: 'typescript', content: 'export const Console = () => {\n  return <div className="terminal">Output...</div>;\n};' }
-                        }
-                    }
-                }
-            },
-            'public/': {
-                type: 'directory',
-                children: {
-                    'index.html': { type: 'html', content: '<!DOCTYPE html>\n<html>\n<head><title>Space</title></head>\n<body><div id="root"></div></body>\n</html>' }
-                }
-            },
-            'package.json': { type: 'json', content: '{\n  "name": "nulis-space",\n  "version": "1.0.0"\n}' }
-        };
-
-        let currentPath = '/';
-        let commandHistory = [];
-        let historyIndex = -1;
         let isScanning = false;
-
+        let isCompiled = false;
+        const bootLog = document.getElementById('boot-log');
+        const bootProgress = document.getElementById('boot-progress');
+        const bootStatus = document.getElementById('boot-status');
+        const bootScreen = document.getElementById('boot-screen');
         const terminal = document.getElementById('terminal');
         const input = document.getElementById('input');
         const fileTree = document.getElementById('file-tree');
-        const appViewer = document.getElementById('app-viewer');
-        const appFrame = document.getElementById('app-frame');
-        const loadingOverlay = document.getElementById('loading');
         const scanBtn = document.getElementById('scan-btn');
 
-        function renderFileTree() {
-            const root = fileSystem['/'];
-            let html = '';
-            root.children.forEach(item => {
-                const isDir = item.endsWith('/');
-                const name = isDir ? item.slice(0, -1) : item;
-                const iconClass = isDir ? 'folder' : 'file';
-                const icon = isDir 
-                    ? '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>'
-                    : '<path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline>';
-                html += `<div class="file-item"><svg class="file-icon ${iconClass}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${icon}</svg><span>${name}</span></div>`;
-            });
-            fileTree.innerHTML = html;
+        // --- 1. BOOT SEQUENCE ---
+        async function runBootSequence() {
+            const steps = ["BIOS Initialization...", "Memory Test: 32GB OK", `Target: ${REPO_URL}`, "Loading NEXUS Kernel...", "System Ready"];
+            let progress = 0;
+            for(let i=0; i<steps.length; i++) {
+                const line = document.createElement('div');
+                line.innerText = `▸ ${steps[i]}`;
+                bootLog.appendChild(line);
+                bootLog.scrollTop = bootLog.scrollHeight;
+                progress = Math.round(((i+1)/steps.length)*100);
+                bootProgress.style.width = `${progress}%`;
+                bootStatus.innerText = `${progress}% Complete`;
+                await new Promise(r => setTimeout(r, 400));
+            }
+            setTimeout(() => { bootScreen.classList.add('hidden'); setTimeout(() => bootScreen.style.display = 'none', 500); input.focus(); }, 800);
         }
 
-        function addOutput(type, text, delay = 0) {
+        // --- 2. TERMINAL LOGIC ---
+        function addOutput(type, text) {
             const line = document.createElement('div');
             line.className = 'terminal-line';
-            line.style.animationDelay = `${delay}ms`;
-            if (type === 'command') line.innerHTML = `<span class="prompt">nulis@console:${currentPath}$</span> <span class="command">${text}</span>`;
-            else if (type === 'output') line.innerHTML = `<span class="output">${text}</span>`;
-            else if (type === 'success') line.innerHTML = `<span class="output success">${text}</span>`;
-            else if (type === 'warning') line.innerHTML = `<span class="output warning">${text}</span>`;
-            else if (type === 'info') line.innerHTML = `<span class="output info">${text}</span>`;
-            else if (type === 'highlight') line.innerHTML = `<span class="output highlight">${text}</span>`;
-            else if (type === 'html') line.innerHTML = text;
+            if (type === 'command') line.innerHTML = `<span class="prompt">nexus@os:~$</span> <span class="command">${text}</span>`;
+            else line.innerHTML = `<span class="output ${type}">${text}</span>`;
             terminal.appendChild(line);
             terminal.scrollTop = terminal.scrollHeight;
         }
 
         function clearTerminal() { terminal.innerHTML = ''; }
 
-        // --- ZIP GENERATION LOGIC ---
-        async function generateAndDownloadZip() {
-            addOutput('info', 'Packing files into archive...');
-            
-            const zip = new JSZip();
-            
-            // Recursive function to add files to zip
-            function addFilesToZip(obj, currentPath) {
-                for (const [name, data] of Object.entries(obj)) {
-                    const path = currentPath + name;
-                    if (data.type === 'directory') {
-                        // Create folder and recurse
-                        const folder = zip.folder(path);
-                        if (data.children) {
-                            addFilesToZip(data.children, path + '/');
-                        }
-                    } else {
-                        // Add file with content
-                        zip.file(path, data.content || `// Generated content for ${name}`);
-                    }
-                }
-            }
-
-            addFilesToZip(scannedCode, '');
-
-            try {
-                const blob = await zip.generateAsync({ type: 'blob' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = 'space-scan-output.zip';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                addOutput('success', 'Download started: space-scan-output.zip');
-            } catch (err) {
-                addOutput('warning', 'Failed to generate zip file.');
-                console.error(err);
-            }
-        }
-
-        // --- SCAN LOGIC ---
-        function scanSpaceCode() {
-            if (isScanning) return;
+        // --- 3. GIT CLONE IMPLEMENTATION ---
+        async function gitClone() {
+            if(isScanning) return;
             isScanning = true;
             scanBtn.classList.add('scanning');
             
-            addOutput('command', 'scan --deep --output=zip');
-            addOutput('info', '');
-            addOutput('info', 'Starting deep scan of space deployment...');
-            addOutput('output', `Target: ${APP_URL}`);
-
-            const scanSteps = [
-                'Connecting to deployment server...',
-                'Fetching file manifest...',
-                'Analyzing source tree...',
-                'Building file structure...',
-                'Preparing zip archive...'
-            ];
-
-            let stepDelay = 0;
-            scanSteps.forEach((step, i) => {
-                setTimeout(() => addOutput('output', `  [${i + 1}/${scanSteps.length}] ${step}`), stepDelay);
-                stepDelay += 300;
-            });
-
-            // After scan steps, show tree and trigger download
-            setTimeout(async () => {
-                addOutput('success', 'Scan complete!');
-                addOutput('info', '');
-                addOutput('info', '========================================');
-                addOutput('success', '       SPACE CODE STRUCTURE');
-                addOutput('info', '========================================');
+            addOutput('command', `git clone ${REPO_URL}`);
+            
+            // 1. GENERATE AND DOWNLOAD IMMEDIATELY
+            addOutput('info', `Packing repository files...`);
+            
+            try {
+                const zip = new JSZip();
+                const repo = zip.folder(REPO_NAME);
                 
-                // Render Tree
-                renderTreeOutput(scannedCode, '', true);
+                // Add Files
+                repo.file('index.html', fileSystemState['index.html']);
+                repo.file('package.json', fileSystemState['package.json']);
                 
-                // After tree is rendered, download
-                setTimeout(async () => {
-                    addOutput('info', '----------------------------------------');
-                    addOutput('highlight', 'Generating downloadable archive...');
-                    await generateAndDownloadZip();
-                    
-                    scanBtn.classList.remove('scanning');
-                    isScanning = false;
-                }, 500);
-
-            }, stepDelay + 200);
-        }
-
-        function renderTreeOutput(obj, prefix = '', isLast = true) {
-            const entries = Object.entries(obj);
-            entries.forEach(([name, data], index) => {
-                const isLastItem = index === entries.length - 1;
-                const connector = isLastItem ? '└── ' : '├── ';
+                // Generate Blob
+                const blob = await zip.generateAsync({ type: 'blob' });
                 
-                if (data.type === 'directory') {
-                    addOutput('highlight', `${prefix}${connector}${name}`);
-                } else {
-                    addOutput('output', `${prefix}${connector}${name} (${data.type})`);
-                }
+                // Trigger Download
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `${REPO_NAME}-clone.zip`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                addOutput('success', 'Download initiated successfully.');
 
-                if (data.children) {
-                    const newPrefix = prefix + (isLastItem ? '    ' : '│   ');
-                    renderTreeOutput(data.children, newPrefix, isLastItem);
-                }
-            });
-        }
-
-        // --- COMMANDS ---
-        const commands = {
-            help: () => {
-                addOutput('info', 'Available commands:');
-                addOutput('output', '  scan      - Scan space, show tree, and download zip');
-                addOutput('output', '  download  - Trigger zip download manually');
-                addOutput('output', '  run       - Launch the Space App');
-                addOutput('output', '  clear     - Clear terminal');
-            },
-            scan: scanSpaceCode,
-            download: generateAndDownloadZip,
-            run: () => {
-                addOutput('info', 'Launching Space App...');
-                setTimeout(() => {
-                    addOutput('success', 'Application deployed in viewer');
-                    showAppViewer();
-                }, 500);
-            },
-            clear: () => clearTerminal(),
-            ls: () => {
-                addOutput('output', 'nulis/  config/  deploy/  readme.md  start.sh');
+            } catch (err) {
+                addOutput('warning', 'Download failed to start.');
             }
+
+            // 2. SIMULATE UI DELAYS
+            await delay(200);
+            addOutput('info', `Cloning into '${REPO_NAME}'...`);
+            await delay(400);
+            addOutput('output', `remote: Enumerating objects: 102, done.`);
+            await delay(200);
+            addOutput('output', `remote: Counting objects: 100% (102/102), done.`);
+            await delay(100);
+            addOutput('output', `Receiving objects: 100% (102/102), 1.50 MiB | 4.00 MiB/s, done.`);
+            addOutput('highlight', `Repository archived: ${REPO_NAME}-clone.zip`);
+
+            // Update Sidebar
+            fileTree.innerHTML = `
+                <div class="file-item"><svg class="file-icon folder" style="width:14px;height:14px;opacity:0.7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>${REPO_NAME}/</div>
+                <div class="file-item" style="padding-left:1.5rem"><svg class="file-icon file" style="width:14px;height:14px;opacity:0.7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path></svg>package.json</div>
+            `;
+            isCompiled = true;
+
+            scanBtn.classList.remove('scanning');
+            isScanning = false;
+        }
+
+        function delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+        // --- 4. NPM INSTALL IMPLEMENTATION (UPDATED) ---
+        async function npmInstall() {
+            if(isScanning) return;
+            isScanning = true;
+            
+            addOutput('command', 'npm install');
+            addOutput('output', 'Installing dependencies...');
+
+            // Simulate Install Time
+            await delay(500);
+            addOutput('output', 'added 847 packages, and audited 848 packages in 5s');
+            addOutput('info', 'Generating package-lock.json...');
+            await delay(300);
+
+            // Generate Output Files
+            const lockFile = {
+                name: "space-z-ai",
+                lockfileVersion: 2,
+                requires: true,
+                packages: {
+                    "": { version: "1.0.0", dependencies: { next: "13.5.6", react: "18.2.0" } },
+                    "node_modules/next": { version: "13.5.6" }
+                }
+            };
+
+            // 1. Update Local State
+            fileSystemState['package-lock.json'] = JSON.stringify(lockFile, null, 2);
+
+            // 2. Create Output ZIP
+            addOutput('info', 'Creating output build...');
+            try {
+                const zip = new JSZip();
+                const root = zip.folder('space-app-ready');
+
+                // Add source files
+                root.file('package.json', fileSystemState['package.json']);
+                root.file('package-lock.json', fileSystemState['package-lock.json']);
+                root.file('index.html', fileSystemState['index.html']);
+
+                // Add simulated node_modules
+                const nm = root.folder('node_modules');
+                nm.file('.package-lock.json', JSON.stringify({ locked: true }));
+                const nextDir = nm.folder('next');
+                nextDir.file('package.json', JSON.stringify({ name: "next", version: "13.5.6" }));
+                
+                const blob = await zip.generateAsync({ type: 'blob' });
+                
+                // Trigger Download
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'project-build.zip';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                addOutput('success', 'Download started: project-build.zip');
+                addOutput('highlight', 'Build Ready: ./node_modules installed.');
+
+                // Update Sidebar
+                fileTree.innerHTML = `
+                    <div class="file-item"><svg class="file-icon folder" style="width:14px;height:14px;opacity:0.7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>space-app-ready/</div>
+                    <div class="file-item" style="padding-left:1.5rem"><svg class="file-icon folder" style="width:14px;height:14px;opacity:0.7;color:#666" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>node_modules</div>
+                    <div class="file-item" style="padding-left:1.5rem"><svg class="file-icon file" style="width:14px;height:14px;opacity:0.7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path></svg>package-lock.json</div>
+                `;
+
+            } catch (err) {
+                addOutput('warning', 'Failed to generate build package.');
+            }
+
+            isCompiled = true;
+            isScanning = false;
+        }
+
+        function startApp() {
+            addOutput('command', 'npm run start');
+            if(isCompiled) {
+                addOutput('success', 'Launching Application...');
+                showAppViewer();
+            } else {
+                addOutput('warning', 'Error: Dependencies missing. Run "install" first.');
+            }
+        }
+
+        const commands = {
+            help: () => { addOutput('info', 'Available commands:'); addOutput('output', '  clone    - Clone GitHub repo'); addOutput('output', '  install  - Run npm install & download build'); addOutput('output', '  start    - Run app'); addOutput('output', '  clear    - Clear'); },
+            clone: gitClone,
+            install: npmInstall,
+            start: startApp,
+            clear: () => clearTerminal()
         };
 
         function executeCommand(cmd) {
             const parts = cmd.trim().split(' ');
             const command = parts[0].toLowerCase();
-            addOutput('command', cmd);
+            // Handle 'npm install' specifically
+            if(parts[0] === 'npm' && parts[1] === 'install') {
+                commands.install();
+                return;
+            }
+            // Handle 'run' alias
+            if(command === 'run') { commands.start(); return; }
+
             if (command === '') return;
             if (commands[command]) commands[command]();
-            else {
-                addOutput('warning', `Command not found: ${command}`);
-                addOutput('output', 'Type "help" for available commands');
-            }
+            else addOutput('warning', `Command not found: ${command}`);
         }
 
         function showAppViewer() {
-            appViewer.classList.add('active');
+            document.getElementById('app-viewer').classList.add('active');
             terminal.style.display = 'none';
             document.querySelector('.input-area').style.display = 'none';
-            loadingOverlay.classList.remove('hidden');
-            appFrame.src = APP_URL;
-            appFrame.onload = () => setTimeout(() => loadingOverlay.classList.add('hidden'), 500);
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('app-frame').src = LIVE_URL;
+            document.getElementById('app-frame').onload = () => document.getElementById('loading').classList.add('hidden');
         }
 
         function hideAppViewer() {
-            appViewer.classList.remove('active');
+            document.getElementById('app-viewer').classList.remove('active');
             terminal.style.display = 'block';
             document.querySelector('.input-area').style.display = 'flex';
-            appFrame.src = '';
         }
 
-        function init() {
-            renderFileTree();
-            addOutput('info', 'NULIS Console Launcher v1.0.1');
-            addOutput('success', 'Connected to deployment server');
-            addOutput('output', `App URL: ${APP_URL}`);
-            addOutput('info', 'Type "scan" to analyze code and download zip.');
+        // --- EVENT LISTENERS ---
+        window.onload = runBootSequence;
 
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    const cmd = input.value;
-                    if (cmd.trim()) { commandHistory.push(cmd); historyIndex = commandHistory.length; }
-                    executeCommand(cmd);
-                    input.value = '';
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    if (historyIndex > 0) { historyIndex--; input.value = commandHistory[historyIndex] || ''; }
-                } else if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    if (historyIndex < commandHistory.length) { historyIndex++; input.value = commandHistory[historyIndex] || ''; }
-                }
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { executeCommand(input.value); input.value = ''; } });
+        scanBtn.addEventListener('click', gitClone); 
+        document.getElementById('refresh-btn').addEventListener('click', () => { document.getElementById('loading').classList.remove('hidden'); document.getElementById('app-frame').src = ''; setTimeout(() => document.getElementById('app-frame').src = LIVE_URL, 100); });
+        document.getElementById('close-btn').addEventListener('click', hideAppViewer);
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); tab.classList.add('active');
+                if (tab.dataset.tab === 'app') showAppViewer(); else hideAppViewer();
             });
-
-            scanBtn.addEventListener('click', scanSpaceCode);
-
-            document.querySelectorAll('.file-item[data-view]').forEach(item => {
-                item.addEventListener('click', () => {
-                    document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
-                    item.classList.add('active');
-                    if (item.dataset.view === 'app') { addOutput('command', 'run'); showAppViewer(); }
-                    else hideAppViewer();
-                });
-            });
-
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.addEventListener('click', () => {
-                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    if (tab.dataset.tab === 'app') showAppViewer();
-                    else hideAppViewer();
-                });
-            });
-
-            document.getElementById('refresh-btn').addEventListener('click', () => {
-                loadingOverlay.classList.remove('hidden');
-                appFrame.src = '';
-                setTimeout(() => appFrame.src = APP_URL, 100);
-            });
-
-            document.getElementById('open-btn').addEventListener('click', () => window.open(APP_URL, '_blank'));
-            document.getElementById('close-btn').addEventListener('click', () => {
-                hideAppViewer();
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                document.querySelector('.tab[data-tab="console"]').classList.add('active');
-            });
-
-            input.focus();
-            document.addEventListener('click', () => input.focus());
-        }
-
-        document.addEventListener('DOMContentLoaded', init);
+        });
     </script>
 </body>
 </html>
