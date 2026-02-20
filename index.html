@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mind Key - Real Universal Scanner</title>
+  <title>Mind Key v5.0 - Universal Cloner</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -34,6 +34,7 @@
 
     .font-mono { font-family: 'JetBrains Mono', monospace; }
 
+    /* Animated Background */
     .grid-bg {
       position: fixed;
       inset: 0;
@@ -45,7 +46,6 @@
       pointer-events: none;
       z-index: 0;
     }
-
     @keyframes gridMove {
       0% { transform: translate(0, 0); }
       100% { transform: translate(50px, 50px); }
@@ -57,24 +57,10 @@
       filter: blur(100px);
       pointer-events: none;
       z-index: 0;
-      opacity: 0.5;
+      opacity: 0.4;
     }
-
-    .orb-1 {
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, rgba(0, 255, 157, 0.15), transparent 70%);
-      top: -200px;
-      right: -200px;
-    }
-
-    .orb-2 {
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(circle, rgba(0, 170, 255, 0.1), transparent 70%);
-      bottom: -100px;
-      left: -100px;
-    }
+    .orb-1 { width: 600px; height: 600px; background: rgba(0, 255, 157, 0.1); top: -200px; right: -200px; }
+    .orb-2 { width: 500px; height: 500px; background: rgba(0, 170, 255, 0.08); bottom: -100px; left: -100px; }
 
     .console-window {
       background: var(--card);
@@ -92,15 +78,13 @@
       gap: 8px;
       border-bottom: 1px solid var(--border);
     }
-
     .console-dot { width: 12px; height: 12px; border-radius: 50%; }
     .console-body {
       padding: 16px;
-      max-height: 300px;
+      max-height: 280px;
       overflow-y: auto;
     }
     .console-body::-webkit-scrollbar { width: 6px; }
-    .console-body::-webkit-scrollbar-track { background: transparent; }
     .console-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
     .log-line {
@@ -125,14 +109,8 @@
       justify-content: center;
       gap: 8px;
     }
-    .btn-primary:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 25px rgba(0, 255, 157, 0.3);
-    }
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+    .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(0, 255, 157, 0.3); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .btn-secondary {
       background: transparent;
@@ -144,25 +122,25 @@
       cursor: pointer;
       transition: all 0.2s ease;
     }
-    .btn-secondary:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
 
     .btn-download {
       background: linear-gradient(135deg, #00aa77, #00ddaa);
       color: var(--bg);
       font-weight: 600;
-      padding: 12px 24px;
+      padding: 14px 24px;
       border-radius: 8px;
       border: none;
       cursor: pointer;
       transition: all 0.2s ease;
-      display: inline-flex;
+      width: 100%;
+      display: flex;
+      justify-content: center;
       align-items: center;
       gap: 8px;
-      width: 100%;
-      justify-content: center;
     }
-    .btn-download:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(0, 221, 170, 0.4); }
-    .btn-download:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-download:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0, 221, 170, 0.4); }
+    .btn-download:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
 
     .result-card {
       background: var(--card);
@@ -187,16 +165,17 @@
     }
     .input-wrapper input:focus { outline: none; border-color: var(--accent); }
 
+    /* Preview Container */
     .preview-frame {
       background: #fff;
       border-radius: 8px;
       overflow: hidden;
-      min-height: 400px;
+      min-height: 450px;
       position: relative;
     }
     .preview-frame iframe { 
       width: 100%; 
-      height: 400px; 
+      height: 450px; 
       border: none; 
       background: white;
     }
@@ -207,7 +186,6 @@
       border: none;
       color: var(--muted);
       cursor: pointer;
-      font-family: 'Space Grotesk', sans-serif;
       font-weight: 500;
       border-bottom: 2px solid transparent;
       transition: all 0.2s;
@@ -225,9 +203,27 @@
       white-space: pre-wrap;
       word-break: break-all;
     }
-
-    .reveal { opacity: 0; transform: translateY(20px); animation: revealUp 0.6s ease forwards; }
-    @keyframes revealUp { to { opacity: 1; transform: translateY(0); } }
+    
+    .badge-live {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      background: rgba(0, 255, 157, 0.1);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .pulse-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
   </style>
 </head>
 <body>
@@ -242,14 +238,14 @@
       <header class="reveal mb-6">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#00ff9d] to-[#00aa66] flex items-center justify-center shadow-lg shadow-[rgba(0,255,157,0.3)]">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#00ff9d] to-[#00aa66] flex items-center justify-center shadow-lg">
               <svg class="w-6 h-6 text-[#0a0a0f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
               </svg>
             </div>
             <div>
               <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Mind Key</h1>
-              <p class="text-[var(--muted)] text-sm">Real-time Universal Scanner & Builder</p>
+              <p class="text-[var(--muted)] text-sm">Universal Site Cloner & Builder</p>
             </div>
           </div>
         </div>
@@ -258,16 +254,13 @@
       <!-- Main Grid -->
       <div class="grid xl:grid-cols-3 gap-6">
         
-        <!-- Left Column: Controls & Console -->
+        <!-- Left Column: Controls -->
         <div class="xl:col-span-1 space-y-6">
           
-          <!-- Target Input -->
+          <!-- Input -->
           <div class="reveal console-window">
             <div class="console-header">
-              <div class="console-dot bg-[#ff5f56]"></div>
-              <div class="console-dot bg-[#ffbd2e]"></div>
-              <div class="console-dot bg-[#27ca40]"></div>
-              <span class="ml-2 font-mono text-sm text-[var(--muted)]">target_input.sys</span>
+              <span class="font-mono text-sm text-[var(--muted)]">target.sys</span>
             </div>
             <div class="p-4">
               <label class="block text-sm font-medium mb-2">Target URL</label>
@@ -275,37 +268,36 @@
                 <input type="url" id="targetInput" placeholder="https://example.com" value="https://j1pe01s18yx0-d.space.z.ai/">
               </div>
               <div class="flex gap-2">
-                <button class="btn-primary flex-1" id="scanBtn" onclick="startRealScan()">
+                <button class="btn-primary flex-1" id="scanBtn" onclick="startFullScan()">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                  Deep Scan
+                  Clone Target
                 </button>
                 <button class="btn-secondary" onclick="clearAll()">Clear</button>
               </div>
             </div>
           </div>
 
-          <!-- Console Output -->
+          <!-- Console -->
           <div class="reveal console-window">
             <div class="console-header">
-              <span class="font-mono text-sm text-[var(--muted)]">build.log</span>
+              <span class="font-mono text-sm text-[var(--muted)]">engine.log</span>
             </div>
             <div class="console-body font-mono text-xs" id="consoleOutput">
-              <div class="text-[var(--muted)]">[SYS] Mind Key Engine v4.0 Ready</div>
+              <div class="text-[var(--muted)]">[SYS] Mind Key v5.0 Ready</div>
             </div>
           </div>
 
           <!-- Progress -->
           <div class="reveal result-card">
             <div class="flex items-center justify-between mb-3">
-              <h3 class="font-semibold text-sm">Scan Progress</h3>
+              <h3 class="font-semibold text-sm">Cloning Progress</h3>
               <span class="font-mono text-sm text-[var(--accent)]" id="progressPercent">0%</span>
             </div>
             <div class="progress-bar mb-4">
               <div class="progress-fill" id="progressFill" style="width: 0%"></div>
             </div>
-            <div class="grid grid-cols-3 gap-4 text-center text-xs">
+            <div class="grid grid-cols-2 gap-4 text-center text-xs">
               <div><div class="text-xl font-bold text-[var(--accent)]" id="filesFound">0</div><div class="text-[var(--muted)]">Assets</div></div>
-              <div><div class="text-xl font-bold text-[var(--warning)]" id="depthLevel">0</div><div class="text-[var(--muted)]">Depth</div></div>
               <div><div class="text-xl font-bold" id="timeElapsed">0s</div><div class="text-[var(--muted)]">Time</div></div>
             </div>
           </div>
@@ -313,40 +305,40 @@
           <!-- Actions -->
           <div class="reveal result-card">
              <h3 class="font-semibold mb-3">Build Package</h3>
-             <button class="btn-download" id="downloadBtn" onclick="downloadRealZip()" disabled>
+             <button class="btn-download" id="downloadBtn" onclick="downloadZip()" disabled>
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                Download Full ZIP
+                Download Full Clone (ZIP)
              </button>
-             <div class="text-xs text-[var(--muted)] mt-2 text-center">Contains: HTML, CSS, JS, Images</div>
+             <div class="text-xs text-[var(--muted)] mt-2 text-center">Ready for: npm install && npm start</div>
           </div>
         </div>
 
-        <!-- Middle Column: Code Review -->
+        <!-- Middle Column: Analysis -->
         <div class="xl:col-span-1 space-y-6">
           <div class="reveal result-card">
             <div class="flex items-center justify-between mb-4">
               <h3 class="font-semibold">Build Analysis</h3>
-              <span class="text-xs px-2 py-1 rounded bg-[rgba(0,255,157,0.1)] text-[var(--accent)]" id="reviewStatus">Waiting</span>
+              <span id="statusBadge" class="text-xs px-2 py-1 bg-[var(--bg)] rounded text-[var(--muted)]">Waiting</span>
             </div>
             <div id="reviewContent" class="text-sm space-y-3 max-h-[600px] overflow-y-auto">
-              <p class="text-[var(--muted)]">Scan a target to analyze structure.</p>
+              <p class="text-[var(--muted)]">Click "Clone Target" to analyze structure.</p>
             </div>
           </div>
         </div>
 
-        <!-- Right Column: Preview & Files -->
+        <!-- Right Column: Preview -->
         <div class="xl:col-span-1 space-y-6">
           
           <!-- Live Preview -->
           <div class="reveal result-card">
             <div class="flex items-center justify-between mb-3">
               <h3 class="font-semibold">Working Preview</h3>
-              <span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded hidden" id="previewLive">LIVE</span>
+              <span id="previewLiveBadge" class="badge-live hidden"><span class="pulse-dot"></span>LIVE</span>
             </div>
             <div class="preview-frame bg-gray-100" id="previewContainer">
-              <div class="flex flex-col items-center justify-center h-[400px] text-gray-400 text-sm p-4">
+              <div class="flex flex-col items-center justify-center h-[450px] text-gray-400 text-sm p-4">
                 <svg class="w-16 h-16 mb-2 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                <p class="text-center">Functional preview will render here</p>
+                <p class="text-center">Preview renders here</p>
               </div>
             </div>
           </div>
@@ -354,12 +346,11 @@
           <!-- Code View -->
           <div class="reveal result-card">
             <div class="flex items-center border-b border-[var(--border)] mb-3 -mx-5 -mt-5 px-5 pt-2">
-              <button class="tab-btn active" onclick="switchTab('html')">index.html</button>
-              <button class="tab-btn" onclick="switchTab('css')">styles.css</button>
-              <button class="tab-btn" onclick="switchTab('js')">scripts.js</button>
+              <button class="tab-btn active" onclick="switchView('html')">index.html</button>
+              <button class="tab-btn" onclick="switchView('tree')">file_tree</button>
             </div>
             <div class="code-block font-mono text-[var(--fg)]" id="codeView">
-              <span class="text-[var(--muted)]">// Awaiting scan...</span>
+              <span class="text-[var(--muted)]">// Awaiting clone...</span>
             </div>
           </div>
         </div>
@@ -370,17 +361,15 @@
   <script>
     // === State ===
     let scanActive = false;
-    let buildPackage = null; // Holds the zip structure
-    let previewData = null; // Holds blob URLs for preview
+    let buildData = null; // Holds file structure for ZIP
     let startTime = 0;
     let timerInterval = null;
 
-    // CORS Proxy - robust selection
+    // CORS Proxy
     const PROXY = 'https://corsproxy.io/?';
 
-    // === DOM References ===
+    // === DOM Refs ===
     const els = {};
-    
     document.addEventListener('DOMContentLoaded', () => {
       els.consoleOutput = document.getElementById('consoleOutput');
       els.progressFill = document.getElementById('progressFill');
@@ -393,11 +382,11 @@
       els.downloadBtn = document.getElementById('downloadBtn');
       els.targetInput = document.getElementById('targetInput');
       els.reviewContent = document.getElementById('reviewContent');
-      els.reviewStatus = document.getElementById('reviewStatus');
-      els.previewLive = document.getElementById('previewLive');
+      els.statusBadge = document.getElementById('statusBadge');
+      els.previewLiveBadge = document.getElementById('previewLiveBadge');
     });
 
-    // === Utilities ===
+    // === Utils ===
     function log(msg, type = 'info') {
       const colors = {
         info: 'var(--fg)', success: 'var(--accent)', warning: 'var(--warning)',
@@ -426,306 +415,272 @@
         if (els.timeElapsed) els.timeElapsed.textContent = `${elapsed}s`;
       }, 1000);
     }
+    function stopTimer() { if (timerInterval) clearInterval(timerInterval); }
 
-    function stopTimer() {
-      if (timerInterval) clearInterval(timerInterval);
-    }
+    // === CORE ENGINE ===
 
-    // === Engine Core ===
-    async function startRealScan() {
+    async function startFullScan() {
       if (scanActive) return;
       const targetUrl = els.targetInput.value.trim();
       
-      if (!targetUrl) { log('Please enter a URL', 'error'); return; }
-      try { new URL(targetUrl); } catch (e) { log('Invalid URL format', 'error'); return; }
+      if (!targetUrl) { log('Enter a URL', 'error'); return; }
+      try { new URL(targetUrl); } catch (e) { log('Invalid URL', 'error'); return; }
 
-      // Reset
+      // Reset State
       scanActive = true;
-      buildPackage = { 'assets': {} };
-      previewData = { 'assets': {} };
+      buildData = { 'assets': {} };
       if(els.downloadBtn) els.downloadBtn.disabled = true;
       if(els.consoleOutput) els.consoleOutput.innerHTML = '';
-      if(els.previewLive) els.previewLive.classList.add('hidden');
+      if(els.previewLiveBadge) els.previewLiveBadge.classList.add('hidden');
       
-      log('Initializing deep scan engine...', 'system');
+      log('Initializing Deep Clone Engine...', 'system');
       log(`Target: ${targetUrl}`, 'info');
       startTimer();
 
       // UI Lock
       if(els.scanBtn) {
-        els.scanBtn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity="0.25"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Scanning...';
+        els.scanBtn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity="0.25"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Cloning...';
         els.scanBtn.disabled = true;
       }
       setProgress(0);
 
       try {
-        // 1. Fetch Main HTML
+        // 1. FETCH HTML
         log('Fetching main document...', 'scan');
         const htmlUrl = PROXY + encodeURIComponent(targetUrl);
-        const response = await fetch(htmlUrl);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        
-        const htmlText = await response.text();
-        log(`Received document (${htmlText.length} bytes)`, 'success');
+        const resp = await fetch(htmlUrl);
+        if(!resp.ok) throw new Error('Connection failed');
+        const htmlText = await resp.text();
+        log('Document received', 'success');
         setProgress(20);
 
-        // 2. Parse DOM
+        // 2. PARSE DOM
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlText, 'text/html');
         
-        // Fix base for parsing
+        // Add Base for Preview (Instant Online Preview)
         const base = doc.createElement('base');
         base.href = targetUrl;
         doc.head.prepend(base);
 
-        // 3. Extract Resources
-        const resources = extractResources(doc, targetUrl);
-        log(`Found ${resources.css.length} CSS, ${resources.js.length} JS, ${resources.img.length} Images`, 'info');
-        if(els.filesFound) els.filesFound.textContent = resources.css.length + resources.js.length + resources.img.length;
+        // Render Preview Immediately (Online Mode)
+        renderPreview(doc);
+        log('Preview rendered (Online Mode)', 'success');
+        if(els.previewLiveBadge) els.previewLiveBadge.classList.remove('hidden');
 
-        // 4. Download Assets (CSS, JS, Images)
-        await processResources(resources, doc, targetUrl);
+        // 3. COLLECT ASSETS
+        log('Scanning for assets...', 'scan');
+        const assets = collectAssets(doc, targetUrl);
+        log(`Found ${assets.length} resources`, 'info');
+        if(els.filesFound) els.filesFound.textContent = assets.length;
+
+        // 4. DOWNLOAD ASSETS (For Offline Build)
+        setProgress(40);
+        await downloadAssets(assets, doc, targetUrl);
         setProgress(90);
 
-        // 5. Finalize Build
-        // Remove helper base tag if it's the first one (keeping existing ones if any)
+        // 5. FINALIZE BUILD
+        // Remove base tag for the saved file
         const firstBase = doc.head.querySelector('base');
-        if (firstBase && firstBase.href === targetUrl) firstBase.remove();
-
-        // Save the final HTML
-        buildPackage['index.html'] = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+        if(firstBase) firstBase.remove();
         
-        // 6. Generate Package.json
-        buildPackage['package.json'] = JSON.stringify({
-          name: "mind-key-build",
+        buildData['index.html'] = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+        buildData['package.json'] = JSON.stringify({
+          name: "mind-key-clone",
           version: "1.0.0",
-          description: "Generated by Mind Key",
           scripts: { start: "npx serve ." }
         }, null, 2);
 
-        // 7. Render Preview
-        renderWorkingPreview(doc);
-        
-        // 8. Update UI
-        updateAnalysis(resources);
         log('Build complete!', 'success');
         setProgress(100);
         if(els.downloadBtn) els.downloadBtn.disabled = false;
-        if(els.previewLive) els.previewLive.classList.remove('hidden');
-        switchTab('html');
+        
+        updateStats(assets);
+        switchView('html');
 
       } catch (err) {
         log(`Error: ${err.message}`, 'error');
-        log('Tip: Try a different URL or check connection.', 'warning');
       } finally {
         scanActive = false;
         stopTimer();
         if(els.scanBtn) {
-          els.scanBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>Deep Scan';
+          els.scanBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>Clone Target';
           els.scanBtn.disabled = false;
         }
       }
     }
 
-    function extractResources(doc, baseUrl) {
-      const css = Array.from(doc.querySelectorAll('link[rel="stylesheet"]')).map(l => l.href);
-      const js = Array.from(doc.querySelectorAll('script[src]')).map(s => s.src);
-      const img = Array.from(doc.querySelectorAll('img[src]')).map(i => i.src);
-      return { css, js, img };
-    }
+    function collectAssets(doc, baseUrl) {
+      const assets = [];
+      const url = new URL(baseUrl);
 
-    async function processResources(resources, doc, baseUrl) {
-      log('Downloading assets for build...', 'scan');
-      let count = 0;
-      const total = resources.css.length + resources.js.length + resources.img.length;
-
-      // Helper to fetch and store
-      const processItem = async (url, type, selectorAttr, ext) => {
-        if (!url || url.startsWith('data:')) return;
-        
+      // Helpers
+      const add = (rawUrl, type, attr, tag) => {
+        if(!rawUrl || rawUrl.startsWith('data:')) return;
         try {
-          // Fetch
-          const proxiedUrl = PROXY + encodeURIComponent(url);
-          const res = await fetch(proxiedUrl);
-          const blob = await res.blob();
-          
-          // Naming
-          const name = `asset_${count}.${ext}`;
-          
-          // Store for ZIP
-          buildPackage.assets[name] = blob;
-          
-          // Create Blob URL for Preview
-          const blobUrl = URL.createObjectURL(blob);
-          previewData.assets[name] = blobUrl;
-
-          // Rewrite DOM for ZIP (Local Path)
-          // Rewrite DOM for Preview (Blob URL) - done in renderWorkingPreview
-          
-          // We need to update the doc to point to local path for the ZIP
-          const el = doc.querySelector(`[${selectorAttr}="${url}"]`);
-          if (el) {
-            el.setAttribute(selectorAttr, `assets/${name}`);
-          } else {
-            // Handle cases where querySelector fails due to encoding or oddities
-            // Simple fallback: find any matching
-            doc.querySelectorAll(`[${selectorAttr}]`).forEach(e => {
-                if(e[selectorAttr] === url || e.getAttribute(selectorAttr) === url) {
-                    e.setAttribute(selectorAttr, `assets/${name}`);
-                }
-            });
-          }
-          
-          log(`Processed: ${url.substring(0, 40)}...`, 'info');
-          count++;
-          setProgress(20 + (count / total) * 60);
-        } catch (e) {
-          log(`Skipped: ${url.substring(0, 30)} (ERR)`, 'warning');
-        }
+          // Resolve relative URLs
+          const fullUrl = new URL(rawUrl, url.origin).href;
+          assets.push({ url: fullUrl, type, attr, tag, raw: rawUrl });
+        } catch(e) {}
       };
 
-      // Process CSS
-      for (const u of resources.css) await processItem(u, 'css', 'href', 'css');
-      // Process JS
-      for (const u of resources.js) await processItem(u, 'js', 'src', 'js');
-      // Process Images
-      for (const u of resources.img) await processItem(u, 'img', 'src', 'jpg'); // simplistic extension
-    }
-
-    function renderWorkingPreview(originalDoc) {
-      // Clone the doc to avoid messing up the ZIP build
-      const previewDoc = originalDoc.cloneNode(true);
-      
-      // Find all asset references and replace with Blob URLs
-      // We need a map of (Local Path -> Blob URL)
-      // But we just modified the originalDoc to have local paths.
-      // So we look for "assets/asset_0.css" and replace with blob:...
-      
-      Object.keys(previewData.assets).forEach(localName => {
-        const blobUrl = previewData.assets[localName];
-        
-        // Replace CSS
-        previewDoc.querySelectorAll(`link[href="assets/${localName}"]`).forEach(e => {
-          e.href = blobUrl;
-        });
-        // Replace JS
-        previewDoc.querySelectorAll(`script[src="assets/${localName}"]`).forEach(e => {
-          e.src = blobUrl;
-        });
-        // Replace Images
-        previewDoc.querySelectorAll(`img[src="assets/${localName}"]`).forEach(e => {
-          e.src = blobUrl;
+      // CSS
+      doc.querySelectorAll('link[rel="stylesheet"]').forEach(l => add(l.href, 'css', 'href', 'link'));
+      // JS
+      doc.querySelectorAll('script[src]').forEach(s => add(s.src, 'js', 'src', 'script'));
+      // Images
+      doc.querySelectorAll('img[src]').forEach(i => add(i.src, 'img', 'src', 'img'));
+      doc.querySelectorAll('img[srcset]').forEach(i => {
+        i.srcset.split(',').forEach(s => {
+          const u = s.trim().split(' ')[0];
+          add(u, 'img', 'srcset', 'img'); // Simplified handling
         });
       });
+      // Favicons
+      doc.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]').forEach(l => add(l.href, 'img', 'href', 'link'));
+      // Videos
+      doc.querySelectorAll('video[src], source[src]').forEach(v => add(v.src, 'media', 'src', 'video'));
 
-      // Inject into iframe
-      const html = '<!DOCTYPE html>\n' + previewDoc.documentElement.outerHTML;
-      if(els.previewContainer) {
-        els.previewContainer.innerHTML = `<iframe id="livePreviewFrame" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>`;
-        const iframe = document.getElementById('livePreviewFrame');
-        if(iframe) iframe.srcdoc = html;
-      }
+      return assets;
     }
 
-    function updateAnalysis(resources) {
-      if(els.reviewStatus) {
-        els.reviewStatus.textContent = 'Analyzed';
-        els.reviewStatus.style.color = 'var(--accent)';
+    async function downloadAssets(assets, doc, baseUrl) {
+      let count = 0;
+      const total = assets.length;
+      log('Downloading assets for offline build...', 'scan');
+
+      for(const asset of assets) {
+        try {
+          // Fetch
+          const proxied = PROXY + encodeURIComponent(asset.url);
+          const res = await fetch(proxied);
+          const blob = await res.blob();
+          
+          // Filename
+          const ext = asset.type === 'css' ? 'css' : (asset.type === 'js' ? 'js' : (asset.type === 'img' ? 'img' : 'bin'));
+          const name = `asset_${count}.${ext}`;
+          
+          // Save to Build
+          buildData.assets[name] = blob;
+          
+          // Rewrite HTML
+          const selector = `${asset.tag}[${asset.attr}="${asset.raw}"]`;
+          const el = doc.querySelector(selector);
+          if(el) {
+            if(asset.attr === 'srcset') {
+                // Simple rewrite for srcset
+                el.setAttribute('src', `assets/${name}`);
+                el.removeAttribute('srcset');
+            } else {
+                el.setAttribute(asset.attr, `assets/${name}`);
+            }
+          } else {
+             // Fallback for encoded URLs
+             doc.querySelectorAll(asset.tag).forEach(e => {
+                 if(e.getAttribute(asset.attr) === asset.raw || e[asset.attr] === asset.raw) {
+                     e.setAttribute(asset.attr, `assets/${name}`);
+                 }
+             });
+          }
+          
+          count++;
+          setProgress(40 + (count/total)*50);
+        } catch(e) {
+          log(`Skipped: ${asset.url.substring(0,30)}...`, 'warning');
+        }
+      }
+      log(`Downloaded ${count} files`, 'success');
+    }
+
+    function renderPreview(doc) {
+      if(!els.previewContainer) return;
+      const html = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+      els.previewContainer.innerHTML = `<iframe id="livePreview" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>`;
+      const iframe = document.getElementById('livePreview');
+      if(iframe) iframe.srcdoc = html;
+    }
+
+    function updateStats(assets) {
+      if(els.statusBadge) {
+        els.statusBadge.textContent = 'Cloned';
+        els.statusBadge.style.color = 'var(--accent)';
+        els.statusBadge.style.borderColor = 'var(--accent)';
       }
       if(els.reviewContent) {
         els.reviewContent.innerHTML = `
           <div class="space-y-2 text-xs">
             <div class="flex justify-between border-b border-[var(--border)] py-1">
-              <span class="text-[var(--muted)]">Status</span>
-              <span class="text-[var(--accent)]">Ready to Deploy</span>
-            </div>
-            <div class="flex justify-between border-b border-[var(--border)] py-1">
               <span class="text-[var(--muted)]">Total Assets</span>
-              <span>${resources.css.length + resources.js.length + resources.img.length}</span>
+              <span class="text-[var(--fg)]">${assets.length}</span>
             </div>
             <div class="flex justify-between border-b border-[var(--border)] py-1">
-              <span class="text-[var(--muted)]">CSS Files</span>
-              <span>${resources.css.length}</span>
+              <span class="text-[var(--muted)]">CSS</span>
+              <span class="text-[var(--fg)]">${assets.filter(a => a.type === 'css').length}</span>
             </div>
             <div class="flex justify-between border-b border-[var(--border)] py-1">
-              <span class="text-[var(--muted)]">JS Files</span>
-              <span>${resources.js.length}</span>
+              <span class="text-[var(--muted)]">Scripts</span>
+              <span class="text-[var(--fg)]">${assets.filter(a => a.type === 'js').length}</span>
             </div>
             <div class="flex justify-between border-b border-[var(--border)] py-1">
               <span class="text-[var(--muted)]">Images</span>
-              <span>${resources.img.length}</span>
+              <span class="text-[var(--fg)]">${assets.filter(a => a.type === 'img').length}</span>
             </div>
           </div>
-          <div class="mt-4 p-3 bg-[var(--bg)] rounded text-xs text-[var(--fg)]">
-            <p class="font-bold mb-1">How it works:</p>
-            <p class="text-[var(--muted)]">1. Scanned target DOM structure.<br>2. Downloaded all linked resources.<br>3. Rewrote paths for local use.<br>4. Generated working preview with Blob URLs.</p>
+          <div class="mt-4 p-3 bg-[var(--bg)] rounded border border-[var(--border)] text-[var(--fg)]">
+            <p class="font-bold mb-1">Build Ready</p>
+            <p class="text-[var(--muted)]">Preview is running live. ZIP contains localized source code.</p>
           </div>
         `;
       }
     }
 
-    function switchTab(tab) {
-      if(!els.codeView || !buildPackage) return;
+    function switchView(tab) {
+      if(!buildData) return;
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       let content = '';
       
-      if (tab === 'html') {
-        content = buildPackage['index.html'] || '';
-        // Highlight active btn
+      if(tab === 'html') {
+        content = buildData['index.html'] || '';
         document.querySelector('.tab-btn:first-child')?.classList.add('active');
-      } else if (tab === 'css') {
-        // Find first css asset
-        const cssKey = Object.keys(buildPackage.assets).find(k => k.endsWith('.css'));
-        // We need to read the blob as text, but for simplicity in display, 
-        // we show a placeholder or try to read it if text logic is simple.
-        // Since we stored Blobs, we can't synchronously show them here easily without async.
-        // For this view, we'll just indicate it's in the build.
-        content = `/* ${cssKey || 'style.css'} included in build */\n/* Download ZIP to view full content */`;
-        document.querySelector('.tab-btn:nth-child(2)')?.classList.add('active');
-      } else if (tab === 'js') {
-        const jsKey = Object.keys(buildPackage.assets).find(k => k.endsWith('.js'));
-        content = `// ${jsKey || 'script.js'} included in build\n// Download ZIP to view full content`;
-        document.querySelector('.tab-btn:nth-child(3)')?.classList.add('active');
+      } else if(tab === 'tree') {
+        const files = Object.keys(buildData.assets);
+        content = `// File Tree\n├── index.html\n├── package.json\n└── assets/\n` + files.map(f => `    ├── ${f}`).join('\n');
+        document.querySelector('.tab-btn:last-child')?.classList.add('active');
       }
       
-      els.codeView.textContent = content;
+      if(els.codeView) els.codeView.textContent = content;
     }
 
-    async function downloadRealZip() {
-      if(!buildPackage) return;
+    async function downloadZip() {
+      if(!buildData) return;
       log('Packing ZIP...', 'system');
-
       try {
         const zip = new JSZip();
-        zip.file('index.html', buildPackage['index.html']);
-        zip.file('package.json', buildPackage['package.json']);
-        
-        const assetsFolder = zip.folder('assets');
-        for (const [name, blob] of Object.entries(buildPackage.assets)) {
-          assetsFolder.file(name, blob);
+        zip.file('index.html', buildData['index.html']);
+        zip.file('package.json', buildData['package.json']);
+        const folder = zip.folder('assets');
+        for(const [name, blob] of Object.entries(buildData.assets)) {
+          folder.file(name, blob);
         }
-
         const content = await zip.generateAsync({ type: 'blob' });
-        saveAs(content, 'mind-key-build.zip');
-        log('ZIP downloaded!', 'success');
+        saveAs(content, 'mind-key-clone.zip');
+        log('ZIP Ready', 'success');
       } catch(e) {
-        log('ZIP creation failed', 'error');
+        log('ZIP Failed', 'error');
       }
     }
 
     function clearAll() {
       if(scanActive) return;
-      if(els.consoleOutput) els.consoleOutput.innerHTML = '<div class="text-[var(--muted)]">[SYS] Cleared</div>';
+      if(els.consoleOutput) els.consoleOutput.innerHTML = '';
       if(els.progressFill) els.progressFill.style.width = '0%';
       if(els.timeElapsed) els.timeElapsed.textContent = '0s';
       if(els.filesFound) els.filesFound.textContent = '0';
-      if(els.previewContainer) els.previewContainer.innerHTML = '<div class="flex flex-col items-center justify-center h-[400px] text-gray-400 text-sm p-4"><svg class="w-16 h-16 mb-2 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg><p class="text-center">Cleared</p></div>';
-      if(els.reviewContent) els.reviewContent.innerHTML = '<p class="text-[var(--muted)]">Scan a target to analyze.</p>';
-      if(els.codeView) els.codeView.innerHTML = '<span class="text-[var(--muted)]">// Cleared</span>';
-      if(els.previewLive) els.previewLive.classList.add('hidden');
-      buildPackage = null;
-      previewData = null;
+      if(els.previewContainer) els.previewContainer.innerHTML = '<div class="flex flex-col items-center justify-center h-[450px] text-gray-400 text-sm p-4"><svg class="w-16 h-16 mb-2 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg><p class="text-center">Cleared</p></div>';
+      if(els.reviewContent) els.reviewContent.innerHTML = '<p class="text-[var(--muted)]">Click "Clone Target" to analyze structure.</p>';
+      buildData = null;
       if(els.downloadBtn) els.downloadBtn.disabled = true;
+      if(els.previewLiveBadge) els.previewLiveBadge.classList.add('hidden');
     }
   </script>
 </body>
