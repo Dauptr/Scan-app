@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mind Key - Real Universal Scanner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --bg-secondary: #12121a;
+      --fg: #e8e8ec;
+      --muted: #5a5a6e;
+      --accent: #00ff9d;
+      --accent-dim: #00cc7d;
+      --card: #16161f;
+      --border: #2a2a3a;
+      --danger: #ff3366;
+      --warning: #ffaa00;
+      --info: #00aaff;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(0, 255, 157, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 157, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: gridMove 20s linear infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @keyframes gridMove {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(50px, 50px); }
+    }
+
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(100px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.5;
+    }
+
+    .orb-1 {
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(0, 255, 157, 0.15), transparent 70%);
+      top: -200px;
+      right: -200px;
+    }
+
+    .orb-2 {
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(0, 170, 255, 0.1), transparent 70%);
+      bottom: -100px;
+      left: -100px;
+    }
+
+    .console-window {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 25px 60px -20px rgba(0, 0, 0, 0.6);
+    }
+
+    .console-header {
+      background: var(--bg-secondary);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .console-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .console-body {
+      padding: 16px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .console-body::-webkit-scrollbar { width: 6px; }
+    .console-body::-webkit-scrollbar-track { background: transparent; }
+    .console-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .log-line {
+      opacity: 0;
+      animation: fadeIn 0.2s ease forwards;
+      margin: 3px 0;
+      font-size: 12px;
+    }
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+      font-weight: 600;
+      padding: 12px 24px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(0, 255, 157, 0.3);
+    }
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--fg);
+      font-weight: 500;
+      padding: 12px 20px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-secondary:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-download {
+      background: linear-gradient(135deg, #00aa77, #00ddaa);
+      color: var(--bg);
+      font-weight: 600;
+      padding: 12px 24px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      justify-content: center;
+    }
+    .btn-download:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(0, 221, 170, 0.4); }
+    .btn-download:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .result-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #00ddff); transition: width 0.3s ease; }
+
+    .input-wrapper input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      color: var(--fg);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+    .input-wrapper input:focus { outline: none; border-color: var(--accent); }
+
+    .preview-frame {
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      min-height: 300px;
+    }
+    .preview-frame iframe { width: 100%; height: 300px; border: none; }
+
+    .tab-btn {
+      padding: 10px 16px;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 500;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .code-block {
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 16px;
+      overflow: auto;
+      font-size: 11px;
+      line-height: 1.5;
+      max-height: 250px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .feature-tag {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      margin: 2px;
+    }
+    .tag-core { background: rgba(0, 255, 157, 0.15); color: var(--accent); }
+    .tag-style { background: rgba(255, 170, 0, 0.15); color: var(--warning); }
+    .tag-script { background: rgba(0, 170, 255, 0.15); color: var(--info); }
+    
+    .reveal { opacity: 0; transform: translateY(20px); animation: revealUp 0.6s ease forwards; }
+    @keyframes revealUp { to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <div class="relative z-10 min-h-screen p-4 md:p-6">
+    <div class="max-w-7xl mx-auto">
+      
+      <!-- Header -->
+      <header class="reveal mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#00ff9d] to-[#00aa66] flex items-center justify-center shadow-lg shadow-[rgba(0,255,157,0.3)]">
+              <svg class="w-6 h-6 text-[#0a0a0f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+              </svg>
+            </div>
+            <div>
+              <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Mind Key</h1>
+              <p class="text-[var(--muted)] text-sm">Real-time Universal Scanner Engine</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 text-sm">
+            <span class="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse"></span>
+            <span class="text-[var(--muted)]">Engine Ready</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Grid -->
+      <div class="grid xl:grid-cols-3 gap-6">
+        
+        <!-- Left Column: Controls & Console -->
+        <div class="xl:col-span-1 space-y-6">
+          
+          <!-- Target Input -->
+          <div class="reveal console-window">
+            <div class="console-header">
+              <div class="console-dot bg-[#ff5f56]"></div>
+              <div class="console-dot bg-[#ffbd2e]"></div>
+              <div class="console-dot bg-[#27ca40]"></div>
+              <span class="ml-2 font-mono text-sm text-[var(--muted)]">target_input.sys</span>
+            </div>
+            <div class="p-4">
+              <label class="block text-sm font-medium mb-2">Target URL</label>
+              <div class="input-wrapper mb-3">
+                <input type="url" id="targetInput" placeholder="https://example.com" value="https://j1pe01s18yx0-d.space.z.ai/">
+              </div>
+              <div class="flex gap-2">
+                <button class="btn-primary flex-1" id="scanBtn" onclick="startRealScan()">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                  Scan Target
+                </button>
+                <button class="btn-secondary" onclick="clearAll()">Clear</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Console Output -->
+          <div class="reveal console-window">
+            <div class="console-header">
+              <span class="font-mono text-sm text-[var(--muted)]">backend.log</span>
+            </div>
+            <div class="console-body font-mono text-xs" id="consoleOutput">
+              <div class="text-[var(--muted)]">[SYS] Mind Key Engine v3.1 Initialized</div>
+            </div>
+          </div>
+
+          <!-- Progress -->
+          <div class="reveal result-card">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-semibold text-sm">Scan Progress</h3>
+              <span class="font-mono text-sm text-[var(--accent)]" id="progressPercent">0%</span>
+            </div>
+            <div class="progress-bar mb-4">
+              <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <div class="grid grid-cols-3 gap-4 text-center text-xs">
+              <div><div class="text-xl font-bold text-[var(--accent)]" id="filesFound">0</div><div class="text-[var(--muted)]">Resources</div></div>
+              <div><div class="text-xl font-bold text-[var(--warning)]" id="depthLevel">0</div><div class="text-[var(--muted)]">Depth</div></div>
+              <div><div class="text-xl font-bold" id="timeElapsed">0s</div><div class="text-[var(--muted)]">Time</div></div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="reveal result-card">
+             <h3 class="font-semibold mb-3">Build Actions</h3>
+             <button class="btn-download" id="downloadBtn" onclick="downloadRealZip()" disabled>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Download Source ZIP
+             </button>
+             <div class="text-xs text-[var(--muted)] mt-2 text-center">Ready for: npm install && npm start</div>
+          </div>
+        </div>
+
+        <!-- Middle Column: Code Review -->
+        <div class="xl:col-span-1 space-y-6">
+          <div class="reveal result-card">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold">Scan Analysis</h3>
+              <span class="text-xs px-2 py-1 rounded bg-[rgba(0,255,157,0.1)] text-[var(--accent)]" id="reviewStatus">Waiting</span>
+            </div>
+            <div id="reviewContent" class="text-sm space-y-3 max-h-[600px] overflow-y-auto">
+              <p class="text-[var(--muted)]">Scan a target to see real-time analysis.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Preview & Files -->
+        <div class="xl:col-span-1 space-y-6">
+          
+          <!-- Live Preview -->
+          <div class="reveal result-card">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-semibold">Live Preview</h3>
+              <button class="text-xs text-[var(--accent)] hover:underline" onclick="refreshPreview()">Refresh</button>
+            </div>
+            <div class="preview-frame bg-white" id="previewContainer">
+              <div class="flex items-center justify-center h-[300px] text-gray-400 text-sm">
+                <p>Preview will render here</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Code View -->
+          <div class="reveal result-card">
+            <div class="flex items-center border-b border-[var(--border)] mb-3 -mx-5 -mt-5 px-5 pt-2">
+              <button class="tab-btn active" onclick="switchTab('html')">index.html</button>
+              <button class="tab-btn" onclick="switchTab('css')">style.css</button>
+              <button class="tab-btn" onclick="switchTab('js')">main.js</button>
+            </div>
+            <div class="code-block font-mono text-[var(--fg)]" id="codeView">
+              <span class="text-[var(--muted)]">// No code generated yet</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // === State ===
+    let scanActive = false;
+    let generatedFiles = null;
+    let startTime = 0;
+    let timerInterval = null;
+    let currentTab = 'html';
+
+    // CORS Proxy to bypass browser restrictions
+    const PROXY_URL = 'https://api.allorigins.win/raw?url=';
+
+    // === DOM References ===
+    const els = {};
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      els.consoleOutput = document.getElementById('consoleOutput');
+      els.progressFill = document.getElementById('progressFill');
+      els.progressPercent = document.getElementById('progressPercent');
+      els.filesFound = document.getElementById('filesFound');
+      els.depthLevel = document.getElementById('depthLevel');
+      els.timeElapsed = document.getElementById('timeElapsed');
+      els.codeView = document.getElementById('codeView');
+      els.previewContainer = document.getElementById('previewContainer');
+      els.scanBtn = document.getElementById('scanBtn');
+      els.downloadBtn = document.getElementById('downloadBtn');
+      els.targetInput = document.getElementById('targetInput');
+      els.buildStatus = document.getElementById('buildStatus');
+      els.reviewContent = document.getElementById('reviewContent');
+      els.reviewStatus = document.getElementById('reviewStatus');
+    });
+
+    // === Utilities ===
+    function log(msg, type = 'info') {
+      const colors = {
+        info: 'var(--fg)', success: 'var(--accent)', warning: 'var(--warning)',
+        error: 'var(--danger)', system: 'var(--muted)', scan: 'var(--info)'
+      };
+      const prefixes = { info: 'INFO', success: 'OK', warning: 'WARN', error: 'ERR', system: 'SYS', scan: 'SCAN' };
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      line.style.color = colors[type] || 'var(--fg)';
+      line.textContent = `[${prefixes[type] || 'LOG'}] ${msg}`;
+      if (els.consoleOutput) {
+        els.consoleOutput.appendChild(line);
+        els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
+      }
+    }
+
+    function setProgress(pct) {
+      if (els.progressFill) els.progressFill.style.width = `${pct}%`;
+      if (els.progressPercent) els.progressPercent.textContent = `${Math.floor(pct)}%`;
+    }
+
+    function startTimer() {
+      startTime = Date.now();
+      timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        if (els.timeElapsed) els.timeElapsed.textContent = `${elapsed}s`;
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+    }
+
+    // === Real Scan Engine ===
+    async function startRealScan() {
+      if (scanActive) return;
+      const url = els.targetInput.value.trim();
+      
+      if (!url) { log('Please enter a URL', 'error'); return; }
+      try { new URL(url); } catch (e) { log('Invalid URL format', 'error'); return; }
+
+      // Reset state
+      scanActive = true;
+      generatedFiles = null;
+      if(els.downloadBtn) els.downloadBtn.disabled = true;
+      if(els.consoleOutput) els.consoleOutput.innerHTML = '';
+      
+      log('Initializing scan engine...', 'system');
+      log(`Target: ${url}`, 'info');
+      startTimer();
+
+      // UI Lock
+      if(els.scanBtn) {
+        els.scanBtn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity="0.25"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Scanning...';
+        els.scanBtn.disabled = true;
+      }
+      setProgress(0);
+
+      try {
+        // Step 1: Fetch HTML
+        log('Resolving DNS & Connecting...', 'scan');
+        setProgress(10);
+        
+        const response = await fetch(PROXY_URL + encodeURIComponent(url));
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        log('Connection established', 'success');
+        setProgress(30);
+        log('Downloading content...', 'scan');
+
+        const htmlText = await response.text();
+        log(`Received ${htmlText.length} bytes`, 'info');
+        setProgress(50);
+
+        // Step 2: Parse DOM
+        log('Parsing DOM structure...', 'scan');
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlText, 'text/html');
+        
+        // Step 3: Analyze
+        const analysis = analyzeDom(doc, url);
+        setProgress(70);
+        log(`Found ${analysis.scripts.length} scripts, ${analysis.styles.length} styles`, 'info');
+
+        // Step 4: Generate Build
+        log('Generating source files...', 'scan');
+        await generateBuildPackage(doc, url, analysis);
+        setProgress(90);
+
+        // Step 5: Finalize
+        updateUI(analysis, url);
+        log('Scan complete!', 'success');
+        setProgress(100);
+
+        if(els.downloadBtn) els.downloadBtn.disabled = false;
+
+      } catch (err) {
+        log(`Error: ${err.message}`, 'error');
+        log('Scan failed. Check console for details.', 'error');
+        console.error(err);
+      } finally {
+        scanActive = false;
+        stopTimer();
+        if(els.scanBtn) {
+          els.scanBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>Scan Target';
+          els.scanBtn.disabled = false;
+        }
+      }
+    }
+
+    function analyzeDom(doc, url) {
+      const data = {
+        title: doc.title || 'Unknown',
+        description: '',
+        scripts: [],
+        styles: [],
+        images: [],
+        links: [],
+        meta: []
+      };
+
+      // Meta
+      doc.querySelectorAll('meta').forEach(m => {
+        const name = m.getAttribute('name') || m.getAttribute('property');
+        const content = m.getAttribute('content');
+        if (name && content) {
+          data.meta.push({ name, content });
+          if (name === 'description') data.description = content;
+        }
+      });
+
+      // Scripts
+      doc.querySelectorAll('script').forEach(s => {
+        if (s.src) data.scripts.push(s.src);
+        else if (s.innerText) data.scripts.push({ inline: true, content: s.innerText.substring(0, 100) + '...' });
+      });
+
+      // Styles
+      doc.querySelectorAll('link[rel="stylesheet"]').forEach(l => data.styles.push(l.href));
+      doc.querySelectorAll('style').forEach(s => data.styles.push({ inline: true, content: s.innerText.substring(0, 100) + '...' }));
+
+      // Images
+      doc.querySelectorAll('img').forEach(i => data.images.push(i.src));
+      
+      // Links
+      doc.querySelectorAll('a').forEach(a => data.links.push(a.href));
+
+      return data;
+    }
+
+    async function generateBuildPackage(doc, url, analysis) {
+      const domain = new URL(url).hostname;
+      
+      // Generate index.html (Relative paths fixed)
+      // Note: We clean up the HTML slightly to make it work locally
+      const cleanHtml = doc.documentElement.outerHTML;
+      
+      // Generate package.json
+      const pkg = {
+        name: `${domain.replace(/[^a-z0-9]/g, '-')}-clone`,
+        version: "1.0.0",
+        description: `Clone of ${url} generated by Mind Key`,
+        scripts: {
+          start: "npx serve ."
+        },
+        keywords: ["mind-key", "clone"],
+        license: "MIT"
+      };
+
+      // Create a simple README
+      const readme = `# Cloned Site: ${domain}\nGenerated by Mind Key.\n\nRun with:\n\`\`\`bash\nnpm install\nnpm start\n\`\`\``;
+
+      generatedFiles = {
+        'index.html': cleanHtml,
+        'package.json': JSON.stringify(pkg, null, 2),
+        'README.md': readme
+      };
+
+      // Update code view
+      switchTab('html');
+    }
+
+    function updateUI(analysis, url) {
+      // Update Review
+      if(els.reviewStatus) {
+        els.reviewStatus.textContent = 'Analyzed';
+        els.reviewStatus.style.color = 'var(--accent)';
+      }
+
+      const tags = `
+        <span class="feature-tag tag-core">${analysis.title}</span>
+        <span class="feature-tag tag-style">${analysis.styles.length} Styles</span>
+        <span class="feature-tag tag-script">${analysis.scripts.length} Scripts</span>
+        <span class="feature-tag tag-core">${analysis.images.length} Images</span>
+      `;
+
+      const metaList = analysis.meta.map(m => 
+        `<div class="flex justify-between text-xs border-b border-[var(--border)] py-1">
+          <span class="text-[var(--muted)]">${m.name}</span>
+          <span class="text-right truncate ml-2 max-w-[150px]">${m.content}</span>
+        </div>`
+      ).join('');
+
+      if(els.reviewContent) {
+        els.reviewContent.innerHTML = `
+          <div class="mb-4">${tags}</div>
+          <h4 class="text-xs uppercase text-[var(--muted)] mb-2">Metadata</h4>
+          <div class="mb-4">${metaList || '<p class="text-xs text-[var(--muted)]">No metadata found</p>'}</div>
+          
+          <h4 class="text-xs uppercase text-[var(--muted)] mb-2">External Resources</h4>
+          <div class="text-xs space-y-1 max-h-[150px] overflow-y-auto">
+            ${analysis.scripts.slice(0, 5).map(s => `<div class="truncate text-[var(--info)]">${typeof s === 'string' ? s : 'Inline Script'}</div>`).join('')}
+          </div>
+        `;
+      }
+
+      // Update stats
+      if(els.filesFound) els.filesFound.textContent = analysis.scripts.length + analysis.styles.length + analysis.images.length;
+      if(els.depthLevel) els.depthLevel.textContent = '1'; // Single page scan
+      
+      // Update Preview
+      refreshPreview();
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      if(!els.codeView || !generatedFiles) return;
+
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      // Simple mapping
+      const activeBtn = [...document.querySelectorAll('.tab-btn')].find(b => b.textContent.includes(tab === 'pkg' ? 'package' : tab));
+      if(activeBtn) activeBtn.classList.add('active');
+
+      const content = generatedFiles[tab === 'html' ? 'index.html' : (tab === 'css' ? 'style.css' : (tab === 'js' ? 'main.js' : 'package.json'))];
+      if(content) {
+        // Escape HTML for display
+        els.codeView.textContent = content;
+      } else {
+        els.codeView.innerHTML = `<span class="text-[var(--muted)]">// No ${tab} file generated. Source might be external.</span>`;
+      }
+    }
+
+    function refreshPreview() {
+      if(!generatedFiles || !els.previewContainer) return;
+      
+      // Inject base tag to make relative links work if possible
+      let html = generatedFiles['index.html'];
+      
+      // Note: Previewing external sites with broken links usually fails due to CORS.
+      // We display it as-is.
+      els.previewContainer.innerHTML = `<iframe id="previewFrame" sandbox="allow-scripts"></iframe>`;
+      const iframe = document.getElementById('previewFrame');
+      if(iframe) {
+        iframe.srcdoc = html;
+      }
+    }
+
+    async function downloadRealZip() {
+      if(!generatedFiles) return;
+      log('Packing files...', 'system');
+
+      try {
+        const zip = new JSZip();
+        Object.keys(generatedFiles).forEach(filename => {
+          zip.file(filename, generatedFiles[filename]);
+        });
+
+        const content = await zip.generateAsync({ type: 'blob' });
+        saveAs(content, 'mind-key-scan.zip');
+        log('Download started', 'success');
+      } catch(e) {
+        log('Failed to create ZIP', 'error');
+      }
+    }
+
+    function clearAll() {
+      if(scanActive) return;
+      if(els.consoleOutput) els.consoleOutput.innerHTML = '<div class="text-[var(--muted)]">[SYS] Cleared</div>';
+      if(els.progressFill) els.progressFill.style.width = '0%';
+      if(els.timeElapsed) els.timeElapsed.textContent = '0s';
+      if(els.filesFound) els.filesFound.textContent = '0';
+      if(els.reviewContent) els.reviewContent.innerHTML = '<p class="text-[var(--muted)]">Ready for new scan.</p>';
+      if(els.codeView) els.codeView.innerHTML = '<span class="text-[var(--muted)]">// Cleared</span>';
+      if(els.previewContainer) els.previewContainer.innerHTML = '<div class="flex items-center justify-center h-[300px] text-gray-400 text-sm"><p>Preview cleared</p></div>';
+      generatedFiles = null;
+      if(els.downloadBtn) els.downloadBtn.disabled = true;
+    }
+  </script>
+</body>
+</html>
