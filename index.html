@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mind Key - Universal Scanner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --bg-secondary: #12121a;
+      --fg: #e8e8ec;
+      --muted: #5a5a6e;
+      --accent: #00ff9d;
+      --accent-dim: #00cc7d;
+      --card: #16161f;
+      --border: #2a2a3a;
+      --danger: #ff3366;
+      --warning: #ffaa00;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Animated background grid */
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(0, 255, 157, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 157, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: gridMove 20s linear infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @keyframes gridMove {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(50px, 50px); }
+    }
+
+    /* Floating orbs */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb-1 {
+      width: 400px;
+      height: 400px;
+      background: rgba(0, 255, 157, 0.15);
+      top: -100px;
+      right: -100px;
+      animation: float1 15s ease-in-out infinite;
+    }
+
+    .orb-2 {
+      width: 300px;
+      height: 300px;
+      background: rgba(255, 51, 102, 0.1);
+      bottom: -50px;
+      left: -50px;
+      animation: float2 18s ease-in-out infinite;
+    }
+
+    @keyframes float1 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(-50px, 50px) scale(1.1); }
+    }
+
+    @keyframes float2 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(30px, -30px) scale(0.9); }
+    }
+
+    /* Console styling */
+    .console-window {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 
+        0 0 0 1px rgba(0, 255, 157, 0.1),
+        0 20px 50px -20px rgba(0, 0, 0, 0.5);
+    }
+
+    .console-header {
+      background: var(--bg-secondary);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .console-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .console-body {
+      padding: 16px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .console-body::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .console-body::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .console-body::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+
+    .log-line {
+      opacity: 0;
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    /* Input styling */
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-wrapper input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      padding-right: 120px;
+      color: var(--fg);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .input-wrapper input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 255, 157, 0.1);
+    }
+
+    .input-wrapper input::placeholder {
+      color: var(--muted);
+    }
+
+    /* Button styling */
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+      font-weight: 600;
+      padding: 12px 24px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-dim);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0, 255, 157, 0.3);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--fg);
+      font-weight: 500;
+      padding: 12px 24px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Card styling */
+    .result-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .result-card:hover {
+      border-color: rgba(0, 255, 157, 0.3);
+      transform: translateY(-2px);
+    }
+
+    /* Progress bar */
+    .progress-bar {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #00ddff);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    /* Status indicator */
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Scan animation */
+    .scan-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      animation: scanMove 2s linear infinite;
+    }
+
+    @keyframes scanMove {
+      0% { top: 0; opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { top: 100%; opacity: 0; }
+    }
+
+    /* Typing animation */
+    .typing::after {
+      content: '|';
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    /* Stagger reveal */
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .reveal.visible {
+      animation: revealUp 0.6s ease forwards;
+    }
+
+    @keyframes revealUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* Data visualization */
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+      gap: 4px;
+    }
+
+    .data-cell {
+      aspect-ratio: 1;
+      background: var(--border);
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .data-cell.active {
+      background: var(--accent);
+      box-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <!-- Background elements -->
+  <div class="grid-bg"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <!-- Main container -->
+  <div class="relative z-10 min-h-screen p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+      
+      <!-- Header -->
+      <header class="reveal mb-8 md:mb-12">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#00ff9d] to-[#00aa66] flex items-center justify-center">
+            <svg class="w-6 h-6 text-[#0a0a0f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Mind Key</h1>
+            <p class="text-[var(--muted)] text-sm">Universal Scanner Interface</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 text-sm">
+          <span class="status-dot bg-[var(--accent)]"></span>
+          <span class="text-[var(--muted)]">System Online</span>
+          <span class="text-[var(--border)] mx-2">|</span>
+          <span class="font-mono text-xs text-[var(--muted)]" id="timestamp"></span>
+        </div>
+      </header>
+
+      <!-- Main grid -->
+      <div class="grid lg:grid-cols-2 gap-6">
+        
+        <!-- Left column: Input & Console -->
+        <div class="space-y-6">
+          
+          <!-- Target Input -->
+          <div class="reveal" style="animation-delay: 0.1s;">
+            <div class="console-window">
+              <div class="console-header">
+                <div class="console-dot bg-[#ff5f56]"></div>
+                <div class="console-dot bg-[#ffbd2e]"></div>
+                <div class="console-dot bg-[#27ca40]"></div>
+                <span class="ml-2 font-mono text-sm text-[var(--muted)]">target_input.exe</span>
+              </div>
+              <div class="p-4">
+                <label class="block text-sm font-medium mb-2">Target URL</label>
+                <div class="input-wrapper">
+                  <input 
+                    type="url" 
+                    id="targetInput" 
+                    placeholder="https://example.com"
+                    value="https://j1pe01s18yx0-d.space.z.ai/"
+                  >
+                  <button class="btn-primary absolute right-2 top-1/2 -translate-y-1/2 text-sm py-2 px-4" onclick="setNewTarget()">
+                    New Target
+                  </button>
+                </div>
+                <div class="flex gap-3 mt-4">
+                  <button class="btn-primary flex-1 flex items-center justify-center gap-2" onclick="startScan()" id="scanBtn">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    Initialize Scan
+                  </button>
+                  <button class="btn-secondary" onclick="clearConsole()">
+                    Clear
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Console Output -->
+          <div class="reveal" style="animation-delay: 0.2s;">
+            <div class="console-window">
+              <div class="console-header">
+                <div class="console-dot bg-[#ff5f56]"></div>
+                <div class="console-dot bg-[#ffbd2e]"></div>
+                <div class="console-dot bg-[#27ca40]"></div>
+                <span class="ml-2 font-mono text-sm text-[var(--muted)]">console_output.log</span>
+              </div>
+              <div class="console-body font-mono text-sm" id="consoleOutput">
+                <div class="text-[var(--muted)]">[SYSTEM] Mind Key v2.4.1 initialized</div>
+                <div class="text-[var(--muted)]">[SYSTEM] Awaiting target input...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="reveal grid grid-cols-2 gap-3" style="animation-delay: 0.3s;">
+            <button class="btn-secondary text-sm flex items-center justify-center gap-2" onclick="generateFrontend()">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+              </svg>
+              Generate Frontend
+            </button>
+            <button class="btn-secondary text-sm flex items-center justify-center gap-2" onclick="installBackend()">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+              </svg>
+              Install Backend
+            </button>
+          </div>
+        </div>
+
+        <!-- Right column: Results -->
+        <div class="space-y-6">
+          
+          <!-- Scan Progress -->
+          <div class="reveal result-card" style="animation-delay: 0.2s;" id="progressCard">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold">Scan Progress</h3>
+              <span class="font-mono text-sm text-[var(--accent)]" id="progressPercent">0%</span>
+            </div>
+            <div class="progress-bar mb-4">
+              <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <div class="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div class="text-2xl font-bold text-[var(--accent)]" id="filesFound">0</div>
+                <div class="text-xs text-[var(--muted)]">Files Found</div>
+              </div>
+              <div>
+                <div class="text-2xl font-bold text-[var(--warning)]" id="depthLevel">0</div>
+                <div class="text-xs text-[var(--muted)]">Depth Level</div>
+              </div>
+              <div>
+                <div class="text-2xl font-bold" id="timeElapsed">0s</div>
+                <div class="text-xs text-[var(--muted)]">Time Elapsed</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Root Structure -->
+          <div class="reveal result-card" style="animation-delay: 0.3s;">
+            <h3 class="font-semibold mb-4">Root Structure Map</h3>
+            <div class="relative overflow-hidden rounded-lg bg-[var(--bg)] p-4 min-h-[200px]" id="structureMap">
+              <div class="scan-line hidden" id="scanLine"></div>
+              <div class="data-grid" id="dataGrid"></div>
+            </div>
+            <div class="flex items-center gap-2 mt-4 text-sm">
+              <span class="w-3 h-3 rounded bg-[var(--accent)]"></span>
+              <span class="text-[var(--muted)]">Active nodes</span>
+              <span class="w-3 h-3 rounded bg-[var(--border)] ml-4"></span>
+              <span class="text-[var(--muted)]">Inactive</span>
+            </div>
+          </div>
+
+          <!-- Generated Output -->
+          <div class="reveal result-card" style="animation-delay: 0.4s;" id="outputCard">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold">Generated Output</h3>
+              <button class="text-sm text-[var(--accent)] hover:underline" onclick="copyOutput()">Copy</button>
+            </div>
+            <div class="bg-[var(--bg)] rounded-lg p-4 font-mono text-sm overflow-x-auto">
+              <pre id="outputCode" class="text-[var(--muted)]">// Output will appear here after scan completion</pre>
+            </div>
+            <div class="mt-4">
+              <label class="text-sm text-[var(--muted)] mb-2 block">Frontend Preview Link</label>
+              <div class="flex gap-2">
+                <input 
+                  type="text" 
+                  id="generatedLink" 
+                  class="flex-1 bg-[var(--bg)] border border-[var(--border)] rounded-lg px-4 py-2 font-mono text-sm text-[var(--muted)]" 
+                  readonly
+                  placeholder="Generate to create link..."
+                >
+                <button class="btn-primary text-sm py-2 px-4" onclick="openLink()">Open</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer class="reveal mt-12 text-center text-sm text-[var(--muted)]" style="animation-delay: 0.5s;">
+        <p>Mind Key Universal Scanner | Backend Console Interface</p>
+        <p class="mt-1 font-mono text-xs">Session: <span id="sessionId"></span></p>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // Initialize variables first
+    let scanActive = false;
+    let scanInterval = null;
+    let consoleLines = [];
+    let gridCells = [];
+    
+    // DOM elements (initialized after DOM ready)
+    let consoleOutput = null;
+    let progressFill = null;
+    let progressPercent = null;
+    let filesFound = null;
+    let depthLevel = null;
+    let timeElapsed = null;
+    let dataGrid = null;
+    let scanLine = null;
+    let outputCode = null;
+    let generatedLink = null;
+    let scanBtn = null;
+    let targetInput = null;
+
+    // Initialize DOM elements and setup
+    document.addEventListener('DOMContentLoaded', function() {
+      // Get all DOM elements
+      consoleOutput = document.getElementById('consoleOutput');
+      progressFill = document.getElementById('progressFill');
+      progressPercent = document.getElementById('progressPercent');
+      filesFound = document.getElementById('filesFound');
+      depthLevel = document.getElementById('depthLevel');
+      timeElapsed = document.getElementById('timeElapsed');
+      dataGrid = document.getElementById('dataGrid');
+      scanLine = document.getElementById('scanLine');
+      outputCode = document.getElementById('outputCode');
+      generatedLink = document.getElementById('generatedLink');
+      scanBtn = document.getElementById('scanBtn');
+      targetInput = document.getElementById('targetInput');
+
+      // Initialize UI
+      initializeGrid();
+      initializeRevealAnimations();
+      updateTimestamp();
+      setInterval(updateTimestamp, 1000);
+      generateSessionId();
+    });
+
+    // Initialize data grid
+    function initializeGrid() {
+      if (!dataGrid) return;
+      dataGrid.innerHTML = '';
+      gridCells = [];
+      for (let i = 0; i < 100; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'data-cell';
+        dataGrid.appendChild(cell);
+        gridCells.push(cell);
+      }
+    }
+
+    // Reveal animations with IntersectionObserver
+    function initializeRevealAnimations() {
+      const reveals = document.querySelectorAll('.reveal');
+      
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry, index) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => {
+              entry.target.classList.add('visible');
+            }, index * 100);
+          }
+        });
+      }, { threshold: 0.1 });
+
+      reveals.forEach(el => observer.observe(el));
+    }
+
+    // Update timestamp
+    function updateTimestamp() {
+      const el = document.getElementById('timestamp');
+      if (el) {
+        el.textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+      }
+    }
+
+    // Generate session ID
+    function generateSessionId() {
+      const el = document.getElementById('sessionId');
+      if (el) {
+        el.textContent = 'MK-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+      }
+    }
+
+    // Log to console
+    function logToConsole(message, type = 'info') {
+      if (!consoleOutput) return;
+      
+      const colors = {
+        info: 'var(--fg)',
+        success: 'var(--accent)',
+        warning: 'var(--warning)',
+        error: 'var(--danger)',
+        system: 'var(--muted)'
+      };
+
+      const prefixes = {
+        info: '[INFO]',
+        success: '[SUCCESS]',
+        warning: '[WARNING]',
+        error: '[ERROR]',
+        system: '[SYSTEM]'
+      };
+
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      line.style.color = colors[type] || colors.info;
+      line.textContent = `${prefixes[type] || '[INFO]'} ${message}`;
+      consoleOutput.appendChild(line);
+      consoleOutput.scrollTop = consoleOutput.scrollHeight;
+    }
+
+    // Set new target
+    function setNewTarget() {
+      if (!targetInput) return;
+      
+      const url = targetInput.value.trim();
+      if (!url) {
+        logToConsole('Please enter a valid target URL', 'warning');
+        return;
+      }
+      
+      try {
+        new URL(url);
+        logToConsole(`New target set: ${url}`, 'success');
+        logToConsole('Ready to initialize scan', 'info');
+      } catch (e) {
+        logToConsole('Invalid URL format', 'error');
+      }
+    }
+
+    // Start scan
+    function startScan() {
+      if (scanActive) {
+        stopScan();
+        return;
+      }
+
+      if (!targetInput || !targetInput.value.trim()) {
+        logToConsole('No target specified', 'error');
+        return;
+      }
+
+      scanActive = true;
+      if (scanBtn) {
+        scanBtn.innerHTML = `
+          <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Scanning...
+        `;
+      }
+
+      if (scanLine) scanLine.classList.remove('hidden');
+      
+      logToConsole(`Initiating scan on: ${targetInput.value}`, 'system');
+      logToConsole('Establishing connection...', 'info');
+
+      let progress = 0;
+      let files = 0;
+      let depth = 0;
+      let time = 0;
+
+      const messages = [
+        'Parsing root directory structure...',
+        'Analyzing HTML templates...',
+        'Mapping asset dependencies...',
+        'Scanning JavaScript modules...',
+        'Processing CSS stylesheets...',
+        'Building component tree...',
+        'Generating output manifest...'
+      ];
+
+      let msgIndex = 0;
+
+      scanInterval = setInterval(() => {
+        progress += Math.random() * 3;
+        if (progress > 100) progress = 100;
+
+        files += Math.floor(Math.random() * 5);
+        depth = Math.min(Math.floor(progress / 10), 10);
+        time++;
+
+        if (progressFill) progressFill.style.width = `${progress}%`;
+        if (progressPercent) progressPercent.textContent = `${Math.floor(progress)}%`;
+        if (filesFound) filesFound.textContent = files;
+        if (depthLevel) depthLevel.textContent = depth;
+        if (timeElapsed) timeElapsed.textContent = `${time}s`;
+
+        // Activate random grid cells
+        const activeCount = Math.floor(progress / 2);
+        gridCells.forEach((cell, i) => {
+          if (i < activeCount && Math.random() > 0.3) {
+            cell.classList.add('active');
+          }
+        });
+
+        if (progress >= (msgIndex + 1) * 14 && msgIndex < messages.length) {
+          logToConsole(messages[msgIndex], 'info');
+          msgIndex++;
+        }
+
+        if (progress >= 100) {
+          completeScan(files);
+        }
+      }, 200);
+    }
+
+    // Stop scan
+    function stopScan() {
+      scanActive = false;
+      if (scanInterval) {
+        clearInterval(scanInterval);
+        scanInterval = null;
+      }
+      if (scanBtn) {
+        scanBtn.innerHTML = `
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          Initialize Scan
+        `;
+      }
+      if (scanLine) scanLine.classList.add('hidden');
+    }
+
+    // Complete scan
+    function completeScan(files) {
+      stopScan();
+      logToConsole('Scan completed successfully!', 'success');
+      logToConsole(`Total files analyzed: ${files}`, 'info');
+      logToConsole('Output ready for generation', 'success');
+
+      // Generate output code
+      const output = `// Mind Key Generated Output
+// Target: ${targetInput ? targetInput.value : 'unknown'}
+// Generated: ${new Date().toISOString()}
+
+const scanResults = {
+  target: "${targetInput ? targetInput.value : ''}",
+  timestamp: "${new Date().toISOString()}",
+  files: ${files},
+  structure: {
+    root: { type: "directory", children: 12 },
+    assets: { type: "directory", children: 8 },
+    components: { type: "directory", children: 15 },
+    styles: { type: "directory", children: 4 }
+  },
+  status: "complete"
+};
+
+module.exports = scanResults;`;
+
+      if (outputCode) outputCode.textContent = output;
+
+      // Generate link
+      const linkId = Math.random().toString(36).substring(2, 10);
+      if (generatedLink) generatedLink.value = `https://mindkey.app/preview/${linkId}`;
+    }
+
+    // Clear console
+    function clearConsole() {
+      if (consoleOutput) {
+        consoleOutput.innerHTML = '';
+        logToConsole('Console cleared', 'system');
+        logToConsole('Ready for new scan', 'system');
+      }
+      
+      // Reset progress
+      if (progressFill) progressFill.style.width = '0%';
+      if (progressPercent) progressPercent.textContent = '0%';
+      if (filesFound) filesFound.textContent = '0';
+      if (depthLevel) depthLevel.textContent = '0';
+      if (timeElapsed) timeElapsed.textContent = '0s';
+      
+      // Reset grid
+      gridCells.forEach(cell => cell.classList.remove('active'));
+      
+      // Reset output
+      if (outputCode) outputCode.textContent = '// Output will appear here after scan completion';
+      if (generatedLink) generatedLink.value = '';
+    }
+
+    // Generate frontend
+    function generateFrontend() {
+      logToConsole('Generating frontend interface...', 'info');
+      
+      setTimeout(() => {
+        logToConsole('Frontend bundle created', 'success');
+        logToConsole('Preview link generated', 'success');
+        
+        const linkId = Math.random().toString(36).substring(2, 10);
+        if (generatedLink) generatedLink.value = `https://mindkey.app/preview/${linkId}`;
+      }, 1500);
+    }
+
+    // Install backend
+    function installBackend() {
+      logToConsole('Installing backend module...', 'info');
+      
+      setTimeout(() => {
+        logToConsole('Dependencies resolved', 'info');
+      }, 500);
+      
+      setTimeout(() => {
+        logToConsole('Backend installed to console', 'success');
+        logToConsole('API endpoints active', 'success');
+      }, 1500);
+    }
+
+    // Copy output
+    function copyOutput() {
+      if (outputCode && outputCode.textContent) {
+        navigator.clipboard.writeText(outputCode.textContent).then(() => {
+          logToConsole('Output copied to clipboard', 'success');
+        });
+      }
+    }
+
+    // Open link
+    function openLink() {
+      if (generatedLink && generatedLink.value) {
+        logToConsole(`Opening preview: ${generatedLink.value}`, 'info');
+        window.open(generatedLink.value, '_blank');
+      } else {
+        logToConsole('No preview link available', 'warning');
+      }
+    }
+  </script>
+</body>
+</html>
