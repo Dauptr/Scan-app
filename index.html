@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mind Key v5.0 - Universal Cloner</title>
+  <title>Mind Key v5.1 - Universal Cloner</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -283,7 +283,7 @@
               <span class="font-mono text-sm text-[var(--muted)]">engine.log</span>
             </div>
             <div class="console-body font-mono text-xs" id="consoleOutput">
-              <div class="text-[var(--muted)]">[SYS] Mind Key v5.0 Ready</div>
+              <div class="text-[var(--muted)]">[SYS] Mind Key v5.1 Ready</div>
             </div>
           </div>
 
@@ -424,7 +424,9 @@
       const targetUrl = els.targetInput.value.trim();
       
       if (!targetUrl) { log('Enter a URL', 'error'); return; }
-      try { new URL(targetUrl); } catch (e) { log('Invalid URL', 'error'); return; }
+      
+      // Validate URL structure
+      try { new URL(targetUrl); } catch (e) { log('Invalid URL format', 'error'); return; }
 
       // Reset State
       scanActive = true;
@@ -447,9 +449,15 @@
       try {
         // 1. FETCH HTML
         log('Fetching main document...', 'scan');
-        const htmlUrl = PROXY + encodeURIComponent(targetUrl);
-        const resp = await fetch(htmlUrl);
-        if(!resp.ok) throw new Error('Connection failed');
+        // Use timeout race to prevent hanging
+        const fetchPromise = fetch(PROXY + encodeURIComponent(targetUrl));
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Request Timeout')), 15000)
+        );
+
+        const resp = await Promise.race([fetchPromise, timeoutPromise]);
+        if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        
         const htmlText = await resp.text();
         log('Document received', 'success');
         setProgress(20);
@@ -459,6 +467,9 @@
         const doc = parser.parseFromString(htmlText, 'text/html');
         
         // Add Base for Preview (Instant Online Preview)
+        // Remove existing base tags to avoid conflicts
+        doc.querySelectorAll('base').forEach(b => b.remove());
+        
         const base = doc.createElement('base');
         base.href = targetUrl;
         doc.head.prepend(base);
@@ -500,6 +511,7 @@
 
       } catch (err) {
         log(`Error: ${err.message}`, 'error');
+        log('Check URL or try again. Some sites block cloning.', 'warning');
       } finally {
         scanActive = false;
         stopTimer();
@@ -512,16 +524,19 @@
 
     function collectAssets(doc, baseUrl) {
       const assets = [];
-      const url = new URL(baseUrl);
+      const urlObj = new URL(baseUrl);
 
-      // Helpers
+      // Helper to safely add assets
       const add = (rawUrl, type, attr, tag) => {
-        if(!rawUrl || rawUrl.startsWith('data:')) return;
+        if (!rawUrl || rawUrl.startsWith('data:') || rawUrl.startsWith('javascript:') || rawUrl.startsWith('mailto:')) return;
+        
         try {
-          // Resolve relative URLs
-          const fullUrl = new URL(rawUrl, url.origin).href;
+          // Resolve relative URL
+          const fullUrl = new URL(rawUrl, urlObj.origin).href;
           assets.push({ url: fullUrl, type, attr, tag, raw: rawUrl });
-        } catch(e) {}
+        } catch (e) {
+          // Ignore malformed URLs
+        }
       };
 
       // CSS
@@ -530,12 +545,6 @@
       doc.querySelectorAll('script[src]').forEach(s => add(s.src, 'js', 'src', 'script'));
       // Images
       doc.querySelectorAll('img[src]').forEach(i => add(i.src, 'img', 'src', 'img'));
-      doc.querySelectorAll('img[srcset]').forEach(i => {
-        i.srcset.split(',').forEach(s => {
-          const u = s.trim().split(' ')[0];
-          add(u, 'img', 'srcset', 'img'); // Simplified handling
-        });
-      });
       // Favicons
       doc.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]').forEach(l => add(l.href, 'img', 'href', 'link'));
       // Videos
@@ -564,29 +573,28 @@
           buildData.assets[name] = blob;
           
           // Rewrite HTML
+          // Find element by exact match or "contains" for weird parsing cases
           const selector = `${asset.tag}[${asset.attr}="${asset.raw}"]`;
-          const el = doc.querySelector(selector);
-          if(el) {
-            if(asset.attr === 'srcset') {
-                // Simple rewrite for srcset
-                el.setAttribute('src', `assets/${name}`);
-                el.removeAttribute('srcset');
-            } else {
-                el.setAttribute(asset.attr, `assets/${name}`);
-            }
-          } else {
-             // Fallback for encoded URLs
-             doc.querySelectorAll(asset.tag).forEach(e => {
-                 if(e.getAttribute(asset.attr) === asset.raw || e[asset.attr] === asset.raw) {
-                     e.setAttribute(asset.attr, `assets/${name}`);
-                 }
-             });
+          let el = doc.querySelector(selector);
+          
+          if (!el) {
+            // Fallback: check for partial match or URL encoded match
+            doc.querySelectorAll(asset.tag).forEach(e => {
+              const val = e.getAttribute(asset.attr);
+              if (val && (val === asset.raw || val.includes(asset.raw) || asset.raw.includes(val))) {
+                el = e;
+              }
+            });
+          }
+
+          if (el) {
+            el.setAttribute(asset.attr, `assets/${name}`);
           }
           
           count++;
           setProgress(40 + (count/total)*50);
         } catch(e) {
-          log(`Skipped: ${asset.url.substring(0,30)}...`, 'warning');
+          // Silent fail for individual assets
         }
       }
       log(`Downloaded ${count} files`, 'success');
