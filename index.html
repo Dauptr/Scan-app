@@ -194,7 +194,7 @@
       overflow: hidden;
       min-height: 300px;
     }
-    .preview-frame iframe { width: 100%; height: 300px; border: none; }
+    .preview-frame iframe { width: 100%; height: 300px; border: none; background: white; }
 
     .tab-btn {
       padding: 10px 16px;
@@ -221,18 +221,6 @@
       word-break: break-all;
     }
 
-    .feature-tag {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 600;
-      margin: 2px;
-    }
-    .tag-core { background: rgba(0, 255, 157, 0.15); color: var(--accent); }
-    .tag-style { background: rgba(255, 170, 0, 0.15); color: var(--warning); }
-    .tag-script { background: rgba(0, 170, 255, 0.15); color: var(--info); }
-    
     .reveal { opacity: 0; transform: translateY(20px); animation: revealUp 0.6s ease forwards; }
     @keyframes revealUp { to { opacity: 1; transform: translateY(0); } }
   </style>
@@ -301,7 +289,7 @@
               <span class="font-mono text-sm text-[var(--muted)]">backend.log</span>
             </div>
             <div class="console-body font-mono text-xs" id="consoleOutput">
-              <div class="text-[var(--muted)]">[SYS] Mind Key Engine v3.1 Initialized</div>
+              <div class="text-[var(--muted)]">[SYS] Mind Key Engine v3.2 Initialized</div>
             </div>
           </div>
 
@@ -354,8 +342,8 @@
               <h3 class="font-semibold">Live Preview</h3>
               <button class="text-xs text-[var(--accent)] hover:underline" onclick="refreshPreview()">Refresh</button>
             </div>
-            <div class="preview-frame bg-white" id="previewContainer">
-              <div class="flex items-center justify-center h-[300px] text-gray-400 text-sm">
+            <div class="preview-frame" id="previewContainer">
+              <div class="flex items-center justify-center h-[300px] text-gray-400 text-sm bg-gray-100">
                 <p>Preview will render here</p>
               </div>
             </div>
@@ -365,8 +353,8 @@
           <div class="reveal result-card">
             <div class="flex items-center border-b border-[var(--border)] mb-3 -mx-5 -mt-5 px-5 pt-2">
               <button class="tab-btn active" onclick="switchTab('html')">index.html</button>
-              <button class="tab-btn" onclick="switchTab('css')">style.css</button>
-              <button class="tab-btn" onclick="switchTab('js')">main.js</button>
+              <button class="tab-btn" onclick="switchTab('assets')">assets/</button>
+              <button class="tab-btn" onclick="switchTab('pkg')">package.json</button>
             </div>
             <div class="code-block font-mono text-[var(--fg)]" id="codeView">
               <span class="text-[var(--muted)]">// No code generated yet</span>
@@ -385,8 +373,8 @@
     let timerInterval = null;
     let currentTab = 'html';
 
-    // CORS Proxy to bypass browser restrictions
-    const PROXY_URL = 'https://api.allorigins.win/raw?url=';
+    // CORS Proxy - Using corsproxy.io which is generally reliable
+    const getProxyUrl = (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`;
 
     // === DOM References ===
     const els = {};
@@ -403,7 +391,6 @@
       els.scanBtn = document.getElementById('scanBtn');
       els.downloadBtn = document.getElementById('downloadBtn');
       els.targetInput = document.getElementById('targetInput');
-      els.buildStatus = document.getElementById('buildStatus');
       els.reviewContent = document.getElementById('reviewContent');
       els.reviewStatus = document.getElementById('reviewStatus');
     });
@@ -442,6 +429,14 @@
       if (timerInterval) clearInterval(timerInterval);
     }
 
+    // === Real Network Fetcher ===
+    async function fetchWithProxy(url) {
+      const proxyUrl = getProxyUrl(url);
+      const response = await fetch(proxyUrl);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return await response.text();
+    }
+
     // === Real Scan Engine ===
     async function startRealScan() {
       if (scanActive) return;
@@ -452,7 +447,7 @@
 
       // Reset state
       scanActive = true;
-      generatedFiles = null;
+      generatedFiles = { 'assets': {} }; // Initialize assets object
       if(els.downloadBtn) els.downloadBtn.disabled = true;
       if(els.consoleOutput) els.consoleOutput.innerHTML = '';
       
@@ -469,45 +464,60 @@
 
       try {
         // Step 1: Fetch HTML
-        log('Resolving DNS & Connecting...', 'scan');
+        log('Connecting via secure proxy...', 'scan');
         setProgress(10);
         
-        const response = await fetch(PROXY_URL + encodeURIComponent(url));
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const htmlText = await fetchWithProxy(url);
         
-        log('Connection established', 'success');
+        log(`Received ${htmlText.length} bytes`, 'success');
         setProgress(30);
-        log('Downloading content...', 'scan');
-
-        const htmlText = await response.text();
-        log(`Received ${htmlText.length} bytes`, 'info');
-        setProgress(50);
 
         // Step 2: Parse DOM
         log('Parsing DOM structure...', 'scan');
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlText, 'text/html');
         
-        // Step 3: Analyze
-        const analysis = analyzeDom(doc, url);
-        setProgress(70);
-        log(`Found ${analysis.scripts.length} scripts, ${analysis.styles.length} styles`, 'info');
+        // Fix Base URL for relative paths
+        const base = doc.createElement('base');
+        base.href = url;
+        doc.head.prepend(base);
 
-        // Step 4: Generate Build
-        log('Generating source files...', 'scan');
-        await generateBuildPackage(doc, url, analysis);
+        // Step 3: Analyze & Extract Resources
+        log('Analyzing resources...', 'scan');
+        const analysis = analyzeDom(doc);
+        if(els.filesFound) els.filesFound.textContent = analysis.totalCount;
+        if(els.depthLevel) els.depthLevel.textContent = 1;
+        setProgress(50);
+
+        // Step 4: Download Assets (Real functionality)
+        log('Downloading linked assets...', 'scan');
+        await downloadAssets(doc, analysis, url);
         setProgress(90);
 
-        // Step 5: Finalize
+        // Step 5: Generate Build Files
+        log('Generating package...', 'scan');
+        
+        // Remove the base tag we added for parsing
+        const addedBase = doc.querySelector('base');
+        if (addedBase && addedBase.href === url) addedBase.remove();
+
+        generatedFiles['index.html'] = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+        generatedFiles['package.json'] = JSON.stringify({
+          name: "mind-key-scan",
+          version: "1.0.0",
+          scripts: { start: "npx serve ." }
+        }, null, 2);
+
+        setProgress(100);
+        
+        // UI Update
         updateUI(analysis, url);
         log('Scan complete!', 'success');
-        setProgress(100);
-
         if(els.downloadBtn) els.downloadBtn.disabled = false;
 
       } catch (err) {
-        log(`Error: ${err.message}`, 'error');
-        log('Scan failed. Check console for details.', 'error');
+        log(`Critical Error: ${err.message}`, 'error');
+        log('Possible cause: Target server blocks proxies or is offline.', 'warning');
         console.error(err);
       } finally {
         scanActive = false;
@@ -519,118 +529,93 @@
       }
     }
 
-    function analyzeDom(doc, url) {
+    function analyzeDom(doc) {
       const data = {
-        title: doc.title || 'Unknown',
-        description: '',
-        scripts: [],
-        styles: [],
-        images: [],
-        links: [],
-        meta: []
+        scripts: Array.from(doc.querySelectorAll('script[src]')).map(el => el.src),
+        styles: Array.from(doc.querySelectorAll('link[rel="stylesheet"]')).map(el => el.href),
+        images: Array.from(doc.querySelectorAll('img[src]')).map(el => el.src),
+        title: doc.title
       };
-
-      // Meta
-      doc.querySelectorAll('meta').forEach(m => {
-        const name = m.getAttribute('name') || m.getAttribute('property');
-        const content = m.getAttribute('content');
-        if (name && content) {
-          data.meta.push({ name, content });
-          if (name === 'description') data.description = content;
-        }
-      });
-
-      // Scripts
-      doc.querySelectorAll('script').forEach(s => {
-        if (s.src) data.scripts.push(s.src);
-        else if (s.innerText) data.scripts.push({ inline: true, content: s.innerText.substring(0, 100) + '...' });
-      });
-
-      // Styles
-      doc.querySelectorAll('link[rel="stylesheet"]').forEach(l => data.styles.push(l.href));
-      doc.querySelectorAll('style').forEach(s => data.styles.push({ inline: true, content: s.innerText.substring(0, 100) + '...' }));
-
-      // Images
-      doc.querySelectorAll('img').forEach(i => data.images.push(i.src));
-      
-      // Links
-      doc.querySelectorAll('a').forEach(a => data.links.push(a.href));
-
+      data.totalCount = data.scripts.length + data.styles.length + data.images.length;
       return data;
     }
 
-    async function generateBuildPackage(doc, url, analysis) {
-      const domain = new URL(url).hostname;
+    async function downloadAssets(doc, analysis, baseUrl) {
+      // Download CSS
+      let count = 0;
+      const total = analysis.styles.length + analysis.scripts.length;
       
-      // Generate index.html (Relative paths fixed)
-      // Note: We clean up the HTML slightly to make it work locally
-      const cleanHtml = doc.documentElement.outerHTML;
-      
-      // Generate package.json
-      const pkg = {
-        name: `${domain.replace(/[^a-z0-9]/g, '-')}-clone`,
-        version: "1.0.0",
-        description: `Clone of ${url} generated by Mind Key`,
-        scripts: {
-          start: "npx serve ."
-        },
-        keywords: ["mind-key", "clone"],
-        license: "MIT"
-      };
+      for (const href of analysis.styles) {
+        try {
+          log(`Fetching CSS: ${href.substring(0, 40)}...`, 'info');
+          const content = await fetchWithProxy(href);
+          const fileName = `style_${count}.css`;
+          generatedFiles.assets[fileName] = content;
+          
+          // Rewrite HTML
+          const el = doc.querySelector(`link[href="${href}"]`);
+          if (el) {
+            el.setAttribute('href', `assets/${fileName}`);
+          }
+          count++;
+        } catch (e) {
+          log(`Failed to fetch CSS: ${e.message}`, 'warning');
+        }
+      }
 
-      // Create a simple README
-      const readme = `# Cloned Site: ${domain}\nGenerated by Mind Key.\n\nRun with:\n\`\`\`bash\nnpm install\nnpm start\n\`\`\``;
-
-      generatedFiles = {
-        'index.html': cleanHtml,
-        'package.json': JSON.stringify(pkg, null, 2),
-        'README.md': readme
-      };
-
-      // Update code view
-      switchTab('html');
+      // Download JS
+      for (const src of analysis.scripts) {
+        try {
+          log(`Fetching JS: ${src.substring(0, 40)}...`, 'info');
+          const content = await fetchWithProxy(src);
+          const fileName = `script_${count}.js`;
+          generatedFiles.assets[fileName] = content;
+          
+          // Rewrite HTML
+          const el = doc.querySelector(`script[src="${src}"]`);
+          if (el) {
+            el.setAttribute('src', `assets/${fileName}`);
+          }
+          count++;
+        } catch (e) {
+          log(`Failed to fetch JS: ${e.message}`, 'warning');
+        }
+      }
     }
 
     function updateUI(analysis, url) {
       // Update Review
       if(els.reviewStatus) {
-        els.reviewStatus.textContent = 'Analyzed';
+        els.reviewStatus.textContent = 'Completed';
         els.reviewStatus.style.color = 'var(--accent)';
       }
-
-      const tags = `
-        <span class="feature-tag tag-core">${analysis.title}</span>
-        <span class="feature-tag tag-style">${analysis.styles.length} Styles</span>
-        <span class="feature-tag tag-script">${analysis.scripts.length} Scripts</span>
-        <span class="feature-tag tag-core">${analysis.images.length} Images</span>
-      `;
-
-      const metaList = analysis.meta.map(m => 
-        `<div class="flex justify-between text-xs border-b border-[var(--border)] py-1">
-          <span class="text-[var(--muted)]">${m.name}</span>
-          <span class="text-right truncate ml-2 max-w-[150px]">${m.content}</span>
-        </div>`
-      ).join('');
-
       if(els.reviewContent) {
         els.reviewContent.innerHTML = `
-          <div class="mb-4">${tags}</div>
-          <h4 class="text-xs uppercase text-[var(--muted)] mb-2">Metadata</h4>
-          <div class="mb-4">${metaList || '<p class="text-xs text-[var(--muted)]">No metadata found</p>'}</div>
-          
-          <h4 class="text-xs uppercase text-[var(--muted)] mb-2">External Resources</h4>
-          <div class="text-xs space-y-1 max-h-[150px] overflow-y-auto">
-            ${analysis.scripts.slice(0, 5).map(s => `<div class="truncate text-[var(--info)]">${typeof s === 'string' ? s : 'Inline Script'}</div>`).join('')}
+          <div class="space-y-2">
+            <div class="flex justify-between text-xs border-b border-[var(--border)] py-1">
+              <span class="text-[var(--muted)]">Title</span>
+              <span class="text-right truncate ml-2 max-w-[150px]">${analysis.title}</span>
+            </div>
+            <div class="flex justify-between text-xs border-b border-[var(--border)] py-1">
+              <span class="text-[var(--muted)]">CSS Files</span>
+              <span>${analysis.styles.length}</span>
+            </div>
+            <div class="flex justify-between text-xs border-b border-[var(--border)] py-1">
+              <span class="text-[var(--muted)]">JS Files</span>
+              <span>${analysis.scripts.length}</span>
+            </div>
+            <div class="flex justify-between text-xs border-b border-[var(--border)] py-1">
+              <span class="text-[var(--muted)]">Images</span>
+              <span>${analysis.images.length}</span>
+            </div>
+            <p class="text-xs text-[var(--accent) mt-4">Assets downloaded and HTML rewritten for local use.</p>
           </div>
         `;
       }
-
-      // Update stats
-      if(els.filesFound) els.filesFound.textContent = analysis.scripts.length + analysis.styles.length + analysis.images.length;
-      if(els.depthLevel) els.depthLevel.textContent = '1'; // Single page scan
       
       // Update Preview
       refreshPreview();
+      switchTab('html');
     }
 
     function switchTab(tab) {
@@ -638,28 +623,30 @@
       if(!els.codeView || !generatedFiles) return;
 
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      // Simple mapping
-      const activeBtn = [...document.querySelectorAll('.tab-btn')].find(b => b.textContent.includes(tab === 'pkg' ? 'package' : tab));
+      const activeBtn = [...document.querySelectorAll('.tab-btn')].find(b => b.textContent.includes(tab));
       if(activeBtn) activeBtn.classList.add('active');
 
-      const content = generatedFiles[tab === 'html' ? 'index.html' : (tab === 'css' ? 'style.css' : (tab === 'js' ? 'main.js' : 'package.json'))];
-      if(content) {
-        // Escape HTML for display
-        els.codeView.textContent = content;
-      } else {
-        els.codeView.innerHTML = `<span class="text-[var(--muted)]">// No ${tab} file generated. Source might be external.</span>`;
+      let content = '';
+      if (tab === 'html') {
+        content = generatedFiles['index.html'] || 'No HTML generated';
+      } else if (tab === 'pkg') {
+        content = generatedFiles['package.json'] || 'No package.json generated';
+      } else if (tab === 'assets') {
+        const files = Object.keys(generatedFiles.assets);
+        content = `// Downloaded Assets (${files.length} files)\n\n` + files.map(f => `assets/${f}`).join('\n');
       }
+      
+      els.codeView.textContent = content;
     }
 
     function refreshPreview() {
       if(!generatedFiles || !els.previewContainer) return;
       
-      // Inject base tag to make relative links work if possible
+      // Use the rewritten HTML for preview
+      // Note: Preview might still show broken images as we didn't download binaries
       let html = generatedFiles['index.html'];
       
-      // Note: Previewing external sites with broken links usually fails due to CORS.
-      // We display it as-is.
-      els.previewContainer.innerHTML = `<iframe id="previewFrame" sandbox="allow-scripts"></iframe>`;
+      els.previewContainer.innerHTML = `<iframe id="previewFrame" sandbox="allow-scripts allow-same-origin"></iframe>`;
       const iframe = document.getElementById('previewFrame');
       if(iframe) {
         iframe.srcdoc = html;
@@ -668,17 +655,23 @@
 
     async function downloadRealZip() {
       if(!generatedFiles) return;
-      log('Packing files...', 'system');
+      log('Generating ZIP file...', 'system');
 
       try {
         const zip = new JSZip();
-        Object.keys(generatedFiles).forEach(filename => {
-          zip.file(filename, generatedFiles[filename]);
+        // Add root files
+        zip.file('index.html', generatedFiles['index.html']);
+        zip.file('package.json', generatedFiles['package.json']);
+        
+        // Add assets folder
+        const assetsFolder = zip.folder('assets');
+        Object.keys(generatedFiles.assets).forEach(filename => {
+          assetsFolder.file(filename, generatedFiles.assets[filename]);
         });
 
         const content = await zip.generateAsync({ type: 'blob' });
         saveAs(content, 'mind-key-scan.zip');
-        log('Download started', 'success');
+        log('ZIP downloaded successfully', 'success');
       } catch(e) {
         log('Failed to create ZIP', 'error');
       }
@@ -692,7 +685,7 @@
       if(els.filesFound) els.filesFound.textContent = '0';
       if(els.reviewContent) els.reviewContent.innerHTML = '<p class="text-[var(--muted)]">Ready for new scan.</p>';
       if(els.codeView) els.codeView.innerHTML = '<span class="text-[var(--muted)]">// Cleared</span>';
-      if(els.previewContainer) els.previewContainer.innerHTML = '<div class="flex items-center justify-center h-[300px] text-gray-400 text-sm"><p>Preview cleared</p></div>';
+      if(els.previewContainer) els.previewContainer.innerHTML = '<div class="flex items-center justify-center h-[300px] text-gray-400 text-sm bg-gray-100"><p>Preview cleared</p></div>';
       generatedFiles = null;
       if(els.downloadBtn) els.downloadBtn.disabled = true;
     }
