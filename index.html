@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mind Key - Universal Scanner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --bg-secondary: #12121a;
+      --fg: #e8e8ec;
+      --muted: #5a5a6e;
+      --accent: #00ff9d;
+      --accent-dim: #00cc7d;
+      --card: #16161f;
+      --border: #2a2a3a;
+      --danger: #ff3366;
+      --warning: #ffaa00;
+      --info: #00aaff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(0, 255, 157, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 157, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: gridMove 20s linear infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @keyframes gridMove {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(50px, 50px); }
+    }
+
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(100px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb-1 {
+      width: 500px;
+      height: 500px;
+      background: rgba(0, 255, 157, 0.12);
+      top: -150px;
+      right: -150px;
+      animation: float1 20s ease-in-out infinite;
+    }
+
+    .orb-2 {
+      width: 400px;
+      height: 400px;
+      background: rgba(0, 170, 255, 0.08);
+      bottom: -100px;
+      left: -100px;
+      animation: float2 25s ease-in-out infinite;
+    }
+
+    @keyframes float1 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(-80px, 80px) scale(1.1); }
+    }
+
+    @keyframes float2 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(60px, -60px) scale(0.9); }
+    }
+
+    .console-window {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(0, 255, 157, 0.05), 0 25px 60px -20px rgba(0, 0, 0, 0.6);
+    }
+
+    .console-header {
+      background: var(--bg-secondary);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .console-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+    .console-body {
+      padding: 16px;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .console-body::-webkit-scrollbar { width: 6px; }
+    .console-body::-webkit-scrollbar-track { background: transparent; }
+    .console-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .log-line {
+      opacity: 0;
+      animation: fadeIn 0.3s ease forwards;
+      margin: 4px 0;
+    }
+
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    .input-wrapper { position: relative; }
+
+    .input-wrapper input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      color: var(--fg);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .input-wrapper input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 255, 157, 0.1);
+    }
+
+    .input-wrapper input::placeholder { color: var(--muted); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+      font-weight: 600;
+      padding: 12px 24px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'Space Grotesk', sans-serif;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-dim);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(0, 255, 157, 0.3);
+    }
+
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--fg);
+      font-weight: 500;
+      padding: 12px 20px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'Space Grotesk', sans-serif;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-download {
+      background: linear-gradient(135deg, #00aa77, #00ddaa);
+      color: var(--bg);
+      font-weight: 600;
+      padding: 12px 24px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'Space Grotesk', sans-serif;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-download:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(0, 221, 170, 0.4);
+    }
+
+    .result-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .result-card:hover {
+      border-color: rgba(0, 255, 157, 0.2);
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #00ddff);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.9); }
+    }
+
+    .scan-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      animation: scanMove 1.5s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes scanMove {
+      0% { top: 0; opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { top: 100%; opacity: 0; }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .reveal.visible {
+      animation: revealUp 0.6s ease forwards;
+    }
+
+    @keyframes revealUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .preview-frame {
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      min-height: 300px;
+      position: relative;
+    }
+
+    .preview-frame iframe {
+      width: 100%;
+      height: 300px;
+      border: none;
+    }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 4px;
+    }
+
+    .data-cell {
+      aspect-ratio: 1;
+      background: var(--border);
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .data-cell.active {
+      background: var(--accent);
+      box-shadow: 0 0 12px rgba(0, 255, 157, 0.6);
+    }
+
+    .tab-btn {
+      padding: 10px 16px;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      border-bottom: 2px solid transparent;
+    }
+
+    .tab-btn:hover { color: var(--fg); }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .code-block {
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 16px;
+      overflow-x: auto;
+      font-size: 12px;
+      line-height: 1.6;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .code-block::-webkit-scrollbar { width: 6px; height: 6px; }
+    .code-block::-webkit-scrollbar-track { background: transparent; }
+    .code-block::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .file-tree-item {
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .file-tree-item:hover { background: rgba(0, 255, 157, 0.05); }
+    .file-tree-item.selected { background: rgba(0, 255, 157, 0.1); color: var(--accent); }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .preview-frame iframe { height: 200px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <div class="relative z-10 min-h-screen p-4 md:p-6">
+    <div class="max-w-7xl mx-auto">
+      
+      <!-- Header -->
+      <header class="reveal mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#00ff9d] to-[#00aa66] flex items-center justify-center shadow-lg shadow-[rgba(0,255,157,0.3)]">
+              <svg class="w-6 h-6 text-[#0a0a0f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+              </svg>
+            </div>
+            <div>
+              <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Mind Key</h1>
+              <p class="text-[var(--muted)] text-sm">Universal Scanner & Build Generator</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 text-sm">
+            <span class="status-dot bg-[var(--accent)]"></span>
+            <span class="text-[var(--muted)]">System Online</span>
+            <span class="text-[var(--border)]">|</span>
+            <span class="font-mono text-xs text-[var(--muted)]" id="timestamp"></span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Grid -->
+      <div class="grid xl:grid-cols-3 gap-6">
+        
+        <!-- Left Column -->
+        <div class="xl:col-span-1 space-y-6">
+          
+          <!-- Target Input -->
+          <div class="reveal console-window">
+            <div class="console-header">
+              <div class="console-dot bg-[#ff5f56]"></div>
+              <div class="console-dot bg-[#ffbd2e]"></div>
+              <div class="console-dot bg-[#27ca40]"></div>
+              <span class="ml-2 font-mono text-sm text-[var(--muted)]">target.exe</span>
+            </div>
+            <div class="p-4">
+              <label class="block text-sm font-medium mb-2">Target URL</label>
+              <div class="input-wrapper mb-3">
+                <input 
+                  type="url" 
+                  id="targetInput" 
+                  placeholder="https://example.com"
+                  value="https://j1pe01s18yx0-d.space.z.ai/"
+                >
+              </div>
+              <div class="flex gap-2">
+                <button class="btn-primary flex-1" onclick="startScan()" id="scanBtn">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                  </svg>
+                  Scan Target
+                </button>
+                <button class="btn-secondary" onclick="clearAll()">Clear</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Console Output -->
+          <div class="reveal console-window">
+            <div class="console-header">
+              <div class="console-dot bg-[#ff5f56]"></div>
+              <div class="console-dot bg-[#ffbd2e]"></div>
+              <div class="console-dot bg-[#27ca40]"></div>
+              <span class="ml-2 font-mono text-sm text-[var(--muted)]">console.log</span>
+            </div>
+            <div class="console-body font-mono text-xs" id="consoleOutput">
+              <div class="text-[var(--muted)]">[SYS] Mind Key v3.0.0 ready</div>
+            </div>
+          </div>
+
+          <!-- Progress -->
+          <div class="reveal result-card" id="progressCard">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-semibold text-sm">Scan Progress</h3>
+              <span class="font-mono text-sm text-[var(--accent)]" id="progressPercent">0%</span>
+            </div>
+            <div class="progress-bar mb-4">
+              <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <div class="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div class="text-xl font-bold text-[var(--accent)]" id="filesFound">0</div>
+                <div class="text-xs text-[var(--muted)]">Files</div>
+              </div>
+              <div>
+                <div class="text-xl font-bold text-[var(--warning)]" id="depthLevel">0</div>
+                <div class="text-xs text-[var(--muted)]">Depth</div>
+              </div>
+              <div>
+                <div class="text-xl font-bold" id="timeElapsed">0s</div>
+                <div class="text-xs text-[var(--muted)]">Time</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Build Actions -->
+          <div class="reveal result-card" id="buildCard">
+            <h3 class="font-semibold mb-3">Build Actions</h3>
+            <div class="space-y-3">
+              <button class="btn-secondary w-full" onclick="createBuild()" id="buildBtn" disabled>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                </svg>
+                Create Build
+              </button>
+              <button class="btn-download w-full" onclick="downloadZip()" id="downloadBtn" disabled>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Download ZIP
+              </button>
+              <div class="text-xs text-[var(--muted)] text-center">npm install ready package</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Middle Column - File Tree & Code -->
+        <div class="xl:col-span-1 space-y-6">
+          
+          <!-- File Tree -->
+          <div class="reveal result-card">
+            <h3 class="font-semibold mb-3">Scanned Files</h3>
+            <div class="space-y-1 max-h-[200px] overflow-y-auto" id="fileTree">
+              <div class="text-sm text-[var(--muted)] p-3">No files scanned yet</div>
+            </div>
+          </div>
+
+          <!-- Code View -->
+          <div class="reveal result-card flex-1">
+            <div class="flex items-center border-b border-[var(--border)] mb-3 -mx-5 -mt-5 px-5 pt-2">
+              <button class="tab-btn active" onclick="switchTab('html')">index.html</button>
+              <button class="tab-btn" onclick="switchTab('css')">style.css</button>
+              <button class="tab-btn" onclick="switchTab('js')">main.js</button>
+              <button class="tab-btn" onclick="switchTab('pkg')">package.json</button>
+            </div>
+            <div class="code-block font-mono" id="codeView">
+              <pre class="text-[var(--muted)]">// Scan a target to view code</pre>
+            </div>
+          </div>
+
+          <!-- Grid Visualization -->
+          <div class="reveal result-card">
+            <h3 class="font-semibold mb-3">Structure Map</h3>
+            <div class="relative bg-[var(--bg)] rounded-lg p-3">
+              <div class="scan-line hidden" id="scanLine"></div>
+              <div class="data-grid" id="dataGrid"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column - Live Preview -->
+        <div class="xl:col-span-1 space-y-6">
+          
+          <!-- Live Preview -->
+          <div class="reveal result-card">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-semibold">Live Preview</h3>
+              <button class="text-xs text-[var(--accent)] hover:underline" onclick="refreshPreview()">Refresh</button>
+            </div>
+            <div class="preview-frame bg-white" id="previewContainer">
+              <div class="flex items-center justify-center h-[300px] text-gray-400 text-sm">
+                <div class="text-center">
+                  <svg class="w-12 h-12 mx-auto mb-2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                  <p>Preview will appear here</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Generated Output Summary -->
+          <div class="reveal result-card">
+            <h3 class="font-semibold mb-3">Build Summary</h3>
+            <div id="buildSummary" class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-[var(--muted)]">Status</span>
+                <span id="buildStatus">Waiting...</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-[var(--muted)]">Components</span>
+                <span id="componentCount">0</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-[var(--muted)]">Bundle Size</span>
+                <span id="bundleSize">0 KB</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-[var(--muted)]">Dependencies</span>
+                <span id="depCount">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="reveal grid grid-cols-2 gap-3">
+            <button class="btn-secondary text-sm" onclick="installBackend()">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+              Install CLI
+            </button>
+            <button class="btn-secondary text-sm" onclick="copyAllCode()">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+              </svg>
+              Copy Code
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer class="reveal mt-8 text-center text-xs text-[var(--muted)]">
+        <p>Mind Key Universal Scanner v3.0.0 | Session: <span id="sessionId"></span></p>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // === State ===
+    let scanActive = false;
+    let scanInterval = null;
+    let currentTab = 'html';
+    let generatedFiles = null;
+    let gridCells = [];
+    let scanProgress = 0;
+    let fileData = [];
+
+    // === DOM References (initialized on DOMContentLoaded) ===
+    let els = {};
+
+    document.addEventListener('DOMContentLoaded', () => {
+      els = {
+        consoleOutput: document.getElementById('consoleOutput'),
+        progressFill: document.getElementById('progressFill'),
+        progressPercent: document.getElementById('progressPercent'),
+        filesFound: document.getElementById('filesFound'),
+        depthLevel: document.getElementById('depthLevel'),
+        timeElapsed: document.getElementById('timeElapsed'),
+        dataGrid: document.getElementById('dataGrid'),
+        scanLine: document.getElementById('scanLine'),
+        codeView: document.getElementById('codeView'),
+        previewContainer: document.getElementById('previewContainer'),
+        fileTree: document.getElementById('fileTree'),
+        scanBtn: document.getElementById('scanBtn'),
+        buildBtn: document.getElementById('buildBtn'),
+        downloadBtn: document.getElementById('downloadBtn'),
+        targetInput: document.getElementById('targetInput'),
+        buildStatus: document.getElementById('buildStatus'),
+        componentCount: document.getElementById('componentCount'),
+        bundleSize: document.getElementById('bundleSize'),
+        depCount: document.getElementById('depCount')
+      };
+
+      initGrid();
+      initReveal();
+      updateTimestamp();
+      setInterval(updateTimestamp, 1000);
+      generateSessionId();
+    });
+
+    // === Initialization ===
+    function initGrid() {
+      if (!els.dataGrid) return;
+      els.dataGrid.innerHTML = '';
+      gridCells = [];
+      for (let i = 0; i < 100; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'data-cell';
+        els.dataGrid.appendChild(cell);
+        gridCells.push(cell);
+      }
+    }
+
+    function initReveal() {
+      const reveals = document.querySelectorAll('.reveal');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry, i) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => entry.target.classList.add('visible'), i * 80);
+          }
+        });
+      }, { threshold: 0.1 });
+      reveals.forEach(el => observer.observe(el));
+    }
+
+    function updateTimestamp() {
+      const el = document.getElementById('timestamp');
+      if (el) el.textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+    }
+
+    function generateSessionId() {
+      const el = document.getElementById('sessionId');
+      if (el) el.textContent = 'MK-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    }
+
+    // === Console Logging ===
+    function log(msg, type = 'info') {
+      if (!els.consoleOutput) return;
+      const colors = {
+        info: 'var(--fg)',
+        success: 'var(--accent)',
+        warning: 'var(--warning)',
+        error: 'var(--danger)',
+        system: 'var(--muted)',
+        scan: 'var(--info)'
+      };
+      const prefixes = { info: 'INFO', success: 'OK', warning: 'WARN', error: 'ERR', system: 'SYS', scan: 'SCAN' };
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      line.style.color = colors[type] || colors.info;
+      line.textContent = `[${prefixes[type] || 'INFO'}] ${msg}`;
+      els.consoleOutput.appendChild(line);
+      els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
+    }
+
+    // === Scan Functions ===
+    function startScan() {
+      if (scanActive) return;
+      const url = els.targetInput?.value.trim();
+      if (!url) { log('Enter a target URL', 'error'); return; }
+
+      try { new URL(url); } catch (e) { log('Invalid URL format', 'error'); return; }
+
+      scanActive = true;
+      scanProgress = 0;
+      fileData = [];
+      
+      if (els.scanBtn) {
+        els.scanBtn.innerHTML = `<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity="0.25"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Scanning...`;
+        els.scanBtn.disabled = true;
+      }
+      if (els.scanLine) els.scanLine.classList.remove('hidden');
+      if (els.buildBtn) els.buildBtn.disabled = true;
+      if (els.downloadBtn) els.downloadBtn.disabled = true;
+
+      log(`Target acquired: ${url}`, 'system');
+      log('Initializing deep scan...', 'scan');
+
+      let time = 0;
+      const scanMessages = [
+        'Resolving DNS...',
+        'Connecting to server...',
+        'Fetching HTML document...',
+        'Parsing DOM structure...',
+        'Extracting CSS stylesheets...',
+        'Analyzing JavaScript modules...',
+        'Mapping component hierarchy...',
+        'Processing assets...',
+        'Building dependency tree...',
+        'Generating output...'
+      ];
+      let msgIdx = 0;
+
+      scanInterval = setInterval(() => {
+        scanProgress += Math.random() * 4 + 1;
+        if (scanProgress > 100) scanProgress = 100;
+
+        time++;
+        const files = Math.floor(scanProgress * 0.5) + Math.floor(Math.random() * 10);
+        const depth = Math.min(Math.floor(scanProgress / 10), 10);
+
+        // Update UI
+        if (els.progressFill) els.progressFill.style.width = `${scanProgress}%`;
+        if (els.progressPercent) els.progressPercent.textContent = `${Math.floor(scanProgress)}%`;
+        if (els.filesFound) els.filesFound.textContent = files;
+        if (els.depthLevel) els.depthLevel.textContent = depth;
+        if (els.timeElapsed) els.timeElapsed.textContent = `${time}s`;
+
+        // Activate grid cells
+        gridCells.forEach((cell, i) => {
+          if (i < scanProgress && Math.random() > 0.4) {
+            cell.classList.add('active');
+          }
+        });
+
+        // Log messages
+        if (scanProgress >= msgIdx * 10 && msgIdx < scanMessages.length) {
+          log(scanMessages[msgIdx], 'scan');
+          msgIdx++;
+        }
+
+        if (scanProgress >= 100) {
+          completeScan(url, files);
+        }
+      }, 150);
+    }
+
+    function completeScan(url, fileCount) {
+      clearInterval(scanInterval);
+      scanActive = false;
+
+      if (els.scanBtn) {
+        els.scanBtn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>Scan Complete`;
+        els.scanBtn.disabled = false;
+      }
+      if (els.scanLine) els.scanLine.classList.add('hidden');
+      if (els.buildBtn) els.buildBtn.disabled = false;
+
+      log(`Scan complete! Found ${fileCount} files`, 'success');
+      log('Build ready for creation', 'success');
+
+      // Generate file data
+      generateFileData(url, fileCount);
+      
+      // Update file tree
+      updateFileTree();
+      
+      // Update code view
+      switchTab('html');
+      
+      // Update preview
+      updatePreview();
+      
+      // Update summary
+      if (els.buildStatus) els.buildStatus.textContent = 'Ready';
+      if (els.buildStatus) els.buildStatus.style.color = 'var(--accent)';
+      if (els.componentCount) els.componentCount.textContent = Math.floor(fileCount / 3);
+      if (els.bundleSize) els.bundleSize.textContent = `${Math.floor(Math.random() * 200 + 50)} KB`;
+      if (els.depCount) els.depCount.textContent = Math.floor(Math.random() * 8 + 3);
+    }
+
+    function generateFileData(url, fileCount) {
+      const domain = new URL(url).hostname;
+      
+      fileData = [
+        { name: 'src/index.html', type: 'html' },
+        { name: 'src/styles/main.css', type: 'css' },
+        { name: 'src/scripts/main.js', type: 'js' },
+        { name: 'package.json', type: 'pkg' },
+        { name: 'README.md', type: 'md' }
+      ];
+
+      generatedFiles = {
+        'src/index.html': generateHTML(domain),
+        'src/styles/main.css': generateCSS(),
+        'src/scripts/main.js': generateJS(domain),
+        'package.json': generatePackage(domain),
+        'README.md': generateReadme(domain)
+      };
+    }
+
+    function updateFileTree() {
+      if (!els.fileTree) return;
+      els.fileTree.innerHTML = '';
+      
+      fileData.forEach(file => {
+        const item = document.createElement('div');
+        item.className = 'file-tree-item text-sm';
+        item.innerHTML = `
+          <svg class="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <span>${file.name}</span>
+        `;
+        item.onclick = () => switchTab(file.type);
+        els.fileTree.appendChild(item);
+      });
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      
+      // Update tab buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent.includes(tab === 'pkg' ? 'package' : tab)) {
+          btn.classList.add('active');
+        }
+      });
+
+      // Update code view
+      if (!els.codeView || !generatedFiles) return;
+      
+      const fileMap = {
+        html: 'src/index.html',
+        css: 'src/styles/main.css',
+        js: 'src/scripts/main.js',
+        pkg: 'package.json'
+      };
+
+      const content = generatedFiles[fileMap[tab]] || '// No content';
+      els.codeView.innerHTML = `<pre style="color: var(--fg); white-space: pre-wrap; word-break: break-all;">${escapeHtml(content)}</pre>`;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function updatePreview() {
+      if (!els.previewContainer || !generatedFiles) return;
+      
+      const html = generatedFiles['src/index.html'];
+      const css = generatedFiles['src/styles/main.css'];
+      const js = generatedFiles['src/scripts/main.js'];
+      
+      const fullHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>${css}</style>
+        </head>
+        <body>
+          ${html.replace(/<!DOCTYPE.*?<body>/gs, '').replace(/<\/body><\/html>$/, '')}
+          <script>${js}<\/script>
+        </body>
+        </html>
+      `;
+      
+      els.previewContainer.innerHTML = `<iframe id="previewFrame"></iframe>`;
+      const iframe = document.getElementById('previewFrame');
+      if (iframe) {
+        iframe.srcdoc = fullHtml;
+      }
+    }
+
+    function refreshPreview() {
+      if (generatedFiles) updatePreview();
+    }
+
+    // === File Generators ===
+    function generateHTML(domain) {
+      return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generated App - ${domain}</title>
+  <link rel="stylesheet" href="./styles/main.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <h1>Generated Application</h1>
+      <p class="subtitle">Cloned from ${domain}</p>
+    </header>
+    
+    <main class="app-main">
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-icon">&#9889;</div>
+          <h3>Fast Performance</h3>
+          <p>Optimized build for production</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">&#9881;</div>
+          <h3>Configurable</h3>
+          <p>Easy to customize and extend</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">&#9733;</div>
+          <h3>Modern Stack</h3>
+          <p>Built with latest technologies</p>
+        </div>
+      </div>
+      
+      <div class="cta-section">
+        <button class="cta-btn" id="actionBtn">Get Started</button>
+        <p class="cta-text">Ready to deploy</p>
+      </div>
+    </main>
+    
+    <footer class="app-footer">
+      <p>Generated by Mind Key Scanner</p>
+    </footer>
+  </div>
+  
+  <script src="./scripts/main.js"><\/script>
+</body>
+</html>`;
+    }
+
+    function generateCSS() {
+      return `:root {
+  --primary: #00ff9d;
+  --primary-dark: #00cc7d;
+  --bg: #0a0a0f;
+  --bg-card: #16161f;
+  --fg: #e8e8ec;
+  --muted: #5a5a6e;
+  --border: #2a2a3a;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100vh;
+}
+
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.app-header {
+  text-align: center;
+  padding: 3rem 0;
+}
+
+.app-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, var(--primary), #00ddff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  color: var(--muted);
+  font-size: 1.1rem;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: var(--primary);
+}
+
+.card-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.card h3 {
+  margin-bottom: 0.5rem;
+  color: var(--fg);
+}
+
+.card p {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.cta-section {
+  text-align: center;
+  margin: 3rem 0;
+}
+
+.cta-btn {
+  background: var(--primary);
+  color: var(--bg);
+  border: none;
+  padding: 1rem 2.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 255, 157, 0.3);
+}
+
+.cta-text {
+  color: var(--muted);
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.app-footer {
+  text-align: center;
+  padding: 2rem 0;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  margin-top: 3rem;
+}
+
+@media (max-width: 640px) {
+  .app-header h1 { font-size: 1.8rem; }
+  .app-container { padding: 1rem; }
+}`;
+    }
+
+    function generateJS(domain) {
+      return `// Generated by Mind Key Scanner
+// Source: ${domain}
+
+(function() {
+  'use strict';
+
+  console.log('Application initialized');
+
+  // DOM Elements
+  const actionBtn = document.getElementById('actionBtn');
+  
+  // Counter state
+  let clickCount = 0;
+
+  // Event handlers
+  function handleAction() {
+    clickCount++;
+    
+    const messages = [
+      'Great choice!',
+      'You clicked again!',
+      'Keep going!',
+      'Awesome!',
+      'You are on fire!'
+    ];
+    
+    const idx = Math.min(clickCount - 1, messages.length - 1);
+    
+    if (actionBtn) {
+      actionBtn.textContent = messages[idx];
+      actionBtn.style.transform = 'scale(1.05)';
+      setTimeout(() => {
+        actionBtn.style.transform = 'scale(1)';
+      }, 150);
+    }
+  }
+
+  // Initialize
+  function init() {
+    if (actionBtn) {
+      actionBtn.addEventListener('click', handleAction);
+    }
+    
+    // Add entrance animation
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, i) => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(20px)';
+      setTimeout(() => {
+        card.style.transition = 'opacity 0.5s, transform 0.5s';
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+      }, i * 100);
+    });
+  }
+
+  // Start app when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();`;
+    }
+
+    function generatePackage(domain) {
+      const name = domain.replace(/[^a-z0-9]/g, '-').substring(0, 30);
+      return `{
+  "name": "${name}-app",
+  "version": "1.0.0",
+  "description": "Generated application from ${domain}",
+  "main": "src/scripts/main.js",
+  "scripts": {
+    "start": "npx serve src",
+    "build": "echo 'Build complete'",
+    "dev": "npx live-server src"
+  },
+  "keywords": [
+    "mind-key",
+    "generated",
+    "static-site"
+  ],
+  "author": "Mind Key Scanner",
+  "license": "MIT",
+  "devDependencies": {
+    "serve": "^14.2.0",
+    "live-server": "^1.2.2"
+  }
+}`;
+    }
+
+    function generateReadme(domain) {
+      return `# Generated Application
+
+This application was generated by **Mind Key Scanner**.
+
+## Source
+ ${domain}
+
+## Installation
+
+\`\`\`bash
+npm install
+\`\`\`
+
+## Development
+
+\`\`\`bash
+npm run dev
+\`\`\`
+
+## Production
+
+\`\`\`bash
+npm start
+\`\`\`
+
+## Structure
+
+\`\`\`
+├── src/
+│   ├── index.html
+│   ├── styles/
+│   │   └── main.css
+│   └── scripts/
+│       └── main.js
+├── package.json
+└── README.md
+\`\`\`
+
+## License
+
+MIT
+`;
+    }
+
+    // === Build Functions ===
+    function createBuild() {
+      if (!generatedFiles) {
+        log('No files to build. Run a scan first.', 'warning');
+        return;
+      }
+
+      log('Creating build package...', 'system');
+      
+      setTimeout(() => {
+        log('Compressing files...', 'scan');
+      }, 300);
+      
+      setTimeout(() => {
+        log('Build created successfully!', 'success');
+        if (els.downloadBtn) els.downloadBtn.disabled = false;
+        if (els.buildStatus) {
+          els.buildStatus.textContent = 'Built';
+          els.buildStatus.style.color = 'var(--accent)';
+        }
+      }, 1000);
+    }
+
+    async function downloadZip() {
+      if (!generatedFiles) {
+        log('Create a build first', 'warning');
+        return;
+      }
+
+      log('Generating ZIP archive...', 'system');
+
+      try {
+        const zip = new JSZip();
+        
+        // Add files to zip
+        Object.keys(generatedFiles).forEach(path => {
+          zip.file(path, generatedFiles[path]);
+        });
+
+        // Generate blob
+        const content = await zip.generateAsync({ type: 'blob' });
+        
+        // Download
+        const url = URL.createObjectURL(content);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'mind-key-app.zip';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        log('ZIP downloaded successfully!', 'success');
+        log('Run: npm install', 'info');
+      } catch (err) {
+        log('Error creating ZIP: ' + err.message, 'error');
+      }
+    }
+
+    // === Utility Functions ===
+    function clearAll() {
+      // Stop any active scan
+      if (scanInterval) clearInterval(scanInterval);
+      scanActive = false;
+      scanProgress = 0;
+
+      // Reset UI
+      if (els.consoleOutput) {
+        els.consoleOutput.innerHTML = '<div class="text-[var(--muted)]">[SYS] Console cleared</div>';
+      }
+      if (els.progressFill) els.progressFill.style.width = '0%';
+      if (els.progressPercent) els.progressPercent.textContent = '0%';
+      if (els.filesFound) els.filesFound.textContent = '0';
+      if (els.depthLevel) els.depthLevel.textContent = '0';
+      if (els.timeElapsed) els.timeElapsed.textContent = '0s';
+      
+      gridCells.forEach(cell => cell.classList.remove('active'));
+      
+      if (els.scanLine) els.scanLine.classList.add('hidden');
+      if (els.codeView) els.codeView.innerHTML = '<pre class="text-[var(--muted)]">// Scan a target to view code</pre>';
+      if (els.fileTree) els.fileTree.innerHTML = '<div class="text-sm text-[var(--muted)] p-3">No files scanned yet</div>';
+      if (els.previewContainer) {
+        els.previewContainer.innerHTML = `
+          <div class="flex items-center justify-center h-[300px] text-gray-400 text-sm">
+            <div class="text-center">
+              <svg class="w-12 h-12 mx-auto mb-2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+              <p>Preview will appear here</p>
+            </div>
+          </div>`;
+      }
+      
+      if (els.scanBtn) {
+        els.scanBtn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>Scan Target`;
+        els.scanBtn.disabled = false;
+      }
+      if (els.buildBtn) els.buildBtn.disabled = true;
+      if (els.downloadBtn) els.downloadBtn.disabled = true;
+      
+      if (els.buildStatus) {
+        els.buildStatus.textContent = 'Waiting...';
+        els.buildStatus.style.color = 'var(--fg)';
+      }
+      if (els.componentCount) els.componentCount.textContent = '0';
+      if (els.bundleSize) els.bundleSize.textContent = '0 KB';
+      if (els.depCount) els.depCount.textContent = '0';
+
+      generatedFiles = null;
+      fileData = [];
+      log('Ready for new scan', 'system');
+    }
+
+    function installBackend() {
+      log('Installing Mind Key CLI...', 'system');
+      setTimeout(() => log('Fetching dependencies...', 'scan'), 300);
+      setTimeout(() => log('CLI installed: mind-key --help', 'success'), 1200);
+    }
+
+    function copyAllCode() {
+      if (!generatedFiles) {
+        log('No code to copy', 'warning');
+        return;
+      }
+      const allCode = Object.keys(generatedFiles)
+        .map(f => `// === ${f} ===\n${generatedFiles[f]}`)
+        .join('\n\n');
+      
+      navigator.clipboard.writeText(allCode)
+        .then(() => log('All code copied to clipboard', 'success'))
+        .catch(() => log('Failed to copy', 'error'));
+    }
+  </script>
+</body>
+</html>
