@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mind Key - Deep Universal Scanner</title>
+  <title>Mind Key - Real Universal Scanner</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -13,7 +13,7 @@
       --bg: #0a0a0f;
       --bg-secondary: #12121a;
       --fg: #e8e8ec;
-      --muted: #5a5a6e;
+      --muted: #6a6a7e;
       --accent: #00ff9d;
       --accent-dim: #00cc7d;
       --card: #16161f;
@@ -34,6 +34,7 @@
 
     .font-mono { font-family: 'JetBrains Mono', monospace; }
 
+    /* Background Effects */
     .grid-bg {
       position: fixed;
       inset: 0;
@@ -54,10 +55,10 @@
     .orb {
       position: fixed;
       border-radius: 50%;
-      filter: blur(100px);
+      filter: blur(120px);
       pointer-events: none;
       z-index: 0;
-      opacity: 0.5;
+      opacity: 0.4;
     }
 
     .orb-1 {
@@ -76,6 +77,7 @@
       left: -100px;
     }
 
+    /* Components */
     .console-window {
       background: var(--card);
       border: 1px solid var(--border);
@@ -86,18 +88,20 @@
 
     .console-header {
       background: var(--bg-secondary);
-      padding: 12px 16px;
+      padding: 10px 16px;
       display: flex;
       align-items: center;
       gap: 8px;
       border-bottom: 1px solid var(--border);
     }
 
-    .console-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .console-dot { width: 10px; height: 10px; border-radius: 50%; }
     .console-body {
       padding: 16px;
-      max-height: 300px;
+      height: 240px;
       overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
     }
     .console-body::-webkit-scrollbar { width: 6px; }
     .console-body::-webkit-scrollbar-track { background: transparent; }
@@ -106,8 +110,9 @@
     .log-line {
       opacity: 0;
       animation: fadeIn 0.2s ease forwards;
-      margin: 3px 0;
+      margin: 4px 0;
       font-size: 12px;
+      line-height: 1.4;
     }
     @keyframes fadeIn { to { opacity: 1; } }
 
@@ -115,7 +120,7 @@
       background: var(--accent);
       color: var(--bg);
       font-weight: 600;
-      padding: 12px 24px;
+      padding: 10px 20px;
       border-radius: 8px;
       border: none;
       cursor: pointer;
@@ -126,8 +131,8 @@
       gap: 8px;
     }
     .btn-primary:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 25px rgba(0, 255, 157, 0.3);
+      filter: brightness(1.1);
+      box-shadow: 0 0 20px rgba(0, 255, 157, 0.3);
     }
     .btn-primary:disabled {
       opacity: 0.5;
@@ -138,13 +143,14 @@
       background: transparent;
       color: var(--fg);
       font-weight: 500;
-      padding: 12px 20px;
+      padding: 10px 16px;
       border-radius: 8px;
       border: 1px solid var(--border);
       cursor: pointer;
       transition: all 0.2s ease;
     }
     .btn-secondary:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .btn-download {
       background: linear-gradient(135deg, #00aa77, #00ddaa);
@@ -161,7 +167,7 @@
       width: 100%;
       justify-content: center;
     }
-    .btn-download:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(0, 221, 170, 0.4); }
+    .btn-download:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 25px rgba(0, 221, 170, 0.4); }
     .btn-download:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .result-card {
@@ -171,7 +177,7 @@
       padding: 20px;
     }
 
-    .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
     .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #00ddff); transition: width 0.3s ease; }
 
     .input-wrapper input {
@@ -179,55 +185,71 @@
       background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 14px 16px;
+      padding: 12px 14px;
       color: var(--fg);
       font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
+      font-size: 13px;
       transition: all 0.2s ease;
     }
-    .input-wrapper input:focus { outline: none; border-color: var(--accent); }
+    .input-wrapper input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0, 255, 157, 0.1); }
 
     .preview-frame {
       background: #fff;
-      border-radius: 8px;
+      border-radius: 6px;
       overflow: hidden;
-      min-height: 400px;
+      height: 280px;
       position: relative;
     }
-    .preview-frame iframe { 
-      width: 100%; 
-      height: 400px; 
-      border: none; 
-      background: white;
-    }
+    .preview-frame iframe { width: 100%; height: 100%; border: none; background: #fff; }
 
     .tab-btn {
-      padding: 10px 16px;
+      padding: 8px 14px;
       background: transparent;
       border: none;
       color: var(--muted);
       cursor: pointer;
       font-family: 'Space Grotesk', sans-serif;
       font-weight: 500;
+      font-size: 12px;
       border-bottom: 2px solid transparent;
       transition: all 0.2s;
+      margin-bottom: -1px;
     }
     .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-btn:hover { color: var(--fg); }
 
     .code-block {
       background: var(--bg);
-      border-radius: 8px;
-      padding: 16px;
+      border-radius: 6px;
+      padding: 14px;
       overflow: auto;
       font-size: 11px;
       line-height: 1.5;
-      max-height: 250px;
+      height: 220px;
       white-space: pre-wrap;
       word-break: break-all;
+      border: 1px solid var(--border);
     }
 
-    .reveal { opacity: 0; transform: translateY(20px); animation: revealUp 0.6s ease forwards; }
+    .feature-tag {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      margin: 2px;
+      text-transform: uppercase;
+    }
+    .tag-core { background: rgba(0, 255, 157, 0.15); color: var(--accent); }
+    .tag-style { background: rgba(255, 170, 0, 0.15); color: var(--warning); }
+    .tag-script { background: rgba(0, 170, 255, 0.15); color: var(--info); }
+    
+    .reveal { opacity: 0; transform: translateY(15px); animation: revealUp 0.5s ease forwards; }
     @keyframes revealUp { to { opacity: 1; transform: translateY(0); } }
+    
+    @media (max-width: 1280px) {
+      .xl\:grid-cols-3 { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -239,27 +261,31 @@
     <div class="max-w-7xl mx-auto">
       
       <!-- Header -->
-      <header class="reveal mb-6">
+      <header class="reveal mb-8">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#00ff9d] to-[#00aa66] flex items-center justify-center shadow-lg shadow-[rgba(0,255,157,0.3)]">
-              <svg class="w-6 h-6 text-[#0a0a0f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#00ff9d] to-[#00aa66] flex items-center justify-center shadow-lg shadow-[rgba(0,255,157,0.2)]">
+              <svg class="w-5 h-5 text-[#0a0a0f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
               </svg>
             </div>
             <div>
-              <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Mind Key</h1>
-              <p class="text-[var(--muted)] text-sm">Deep Universal Scanner & Builder</p>
+              <h1 class="text-xl font-bold tracking-tight">Mind Key</h1>
+              <p class="text-[var(--muted)] text-xs">Universal Source Extractor</p>
             </div>
+          </div>
+          <div class="flex items-center gap-2 text-xs bg-[var(--card)] px-3 py-1.5 rounded-full border border-[var(--border)]">
+            <span class="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse"></span>
+            <span class="text-[var(--muted)] font-mono">Engine Ready</span>
           </div>
         </div>
       </header>
 
       <!-- Main Grid -->
-      <div class="grid xl:grid-cols-3 gap-6">
+      <div class="grid xl:grid-cols-3 gap-5">
         
         <!-- Left Column: Controls & Console -->
-        <div class="xl:col-span-1 space-y-6">
+        <div class="xl:col-span-1 space-y-5">
           
           <!-- Target Input -->
           <div class="reveal console-window">
@@ -267,19 +293,19 @@
               <div class="console-dot bg-[#ff5f56]"></div>
               <div class="console-dot bg-[#ffbd2e]"></div>
               <div class="console-dot bg-[#27ca40]"></div>
-              <span class="ml-2 font-mono text-sm text-[var(--muted)]">target_input.sys</span>
+              <span class="ml-2 font-mono text-xs text-[var(--muted)]">target.sys</span>
             </div>
             <div class="p-4">
-              <label class="block text-sm font-medium mb-2">Target URL</label>
+              <label class="block text-xs font-medium mb-2 text-[var(--muted)]">TARGET URL</label>
               <div class="input-wrapper mb-3">
-                <input type="url" id="targetInput" placeholder="https://example.com" value="https://j1pe01s18yx0-d.space.z.ai/">
+                <input type="url" id="targetInput" placeholder="https://example.com">
               </div>
               <div class="flex gap-2">
-                <button class="btn-primary flex-1" id="scanBtn" onclick="startRealScan()">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                  Deep Scan
+                <button class="btn-primary flex-1" id="scanBtn">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                  Scan
                 </button>
-                <button class="btn-secondary" onclick="clearAll()">Clear</button>
+                <button class="btn-secondary" id="clearBtn">Clear</button>
               </div>
             </div>
           </div>
@@ -287,79 +313,86 @@
           <!-- Console Output -->
           <div class="reveal console-window">
             <div class="console-header">
-              <span class="font-mono text-sm text-[var(--muted)]">build.log</span>
+              <span class="font-mono text-xs text-[var(--muted)]">backend.log</span>
             </div>
-            <div class="console-body font-mono text-xs" id="consoleOutput">
-              <div class="text-[var(--muted)]">[SYS] Mind Key Engine v5.0 Deep Ready</div>
+            <div class="console-body font-mono" id="consoleOutput">
+              <div class="text-[var(--muted)]">[SYS] Mind Key Engine Initialized</div>
             </div>
           </div>
 
           <!-- Progress -->
           <div class="reveal result-card">
-            <div class="flex items-center justify-between mb-3">
-              <h3 class="font-semibold text-sm">Scan Progress</h3>
-              <span class="font-mono text-sm text-[var(--accent)]" id="progressPercent">0%</span>
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="font-semibold text-xs uppercase text-[var(--muted)]">Progress</h3>
+              <span class="font-mono text-xs text-[var(--accent)]" id="progressPercent">0%</span>
             </div>
             <div class="progress-bar mb-4">
               <div class="progress-fill" id="progressFill" style="width: 0%"></div>
             </div>
-            <div class="grid grid-cols-3 gap-4 text-center text-xs">
-              <div><div class="text-xl font-bold text-[var(--accent)]" id="filesFound">0</div><div class="text-[var(--muted)]">Assets</div></div>
-              <div><div class="text-xl font-bold text-[var(--warning)]" id="depthLevel">0</div><div class="text-[var(--muted)]">Depth</div></div>
-              <div><div class="text-xl font-bold" id="timeElapsed">0s</div><div class="text-[var(--muted)]">Time</div></div>
+            <div class="grid grid-cols-3 gap-2 text-center text-xs">
+              <div class="bg-[var(--bg)] rounded p-2">
+                <div class="text-lg font-bold text-[var(--accent)]" id="filesFound">0</div>
+                <div class="text-[10px] text-[var(--muted)] uppercase">Resources</div>
+              </div>
+              <div class="bg-[var(--bg)] rounded p-2">
+                <div class="text-lg font-bold text-[var(--info)]" id="depthLevel">0</div>
+                <div class="text-[10px] text-[var(--muted)] uppercase">Scripts</div>
+              </div>
+              <div class="bg-[var(--bg)] rounded p-2">
+                <div class="text-lg font-bold text-[var(--warning)]" id="timeElapsed">0s</div>
+                <div class="text-[10px] text-[var(--muted)] uppercase">Time</div>
+              </div>
             </div>
           </div>
 
           <!-- Actions -->
           <div class="reveal result-card">
-             <h3 class="font-semibold mb-3">Build Package</h3>
-             <button class="btn-download" id="downloadBtn" onclick="downloadRealZip()" disabled>
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                Download Full ZIP
+             <button class="btn-download" id="downloadBtn" disabled>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Download Source ZIP
              </button>
-             <div class="text-xs text-[var(--muted)] mt-2 text-center">Contains: HTML, CSS, JS, Fonts, Images</div>
+             <div class="text-[10px] text-[var(--muted)] mt-3 text-center font-mono">Ready for: npm install && npm start</div>
           </div>
         </div>
 
         <!-- Middle Column: Code Review -->
-        <div class="xl:col-span-1 space-y-6">
-          <div class="reveal result-card">
+        <div class="xl:col-span-1 space-y-5">
+          <div class="reveal result-card h-full flex flex-col">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="font-semibold">Build Analysis</h3>
-              <span class="text-xs px-2 py-1 rounded bg-[rgba(0,255,157,0.1)] text-[var(--accent)]" id="reviewStatus">Waiting</span>
+              <h3 class="font-semibold text-sm">Analysis</h3>
+              <span class="text-[10px] px-2 py-1 rounded bg-[var(--bg)] text-[var(--muted)]" id="reviewStatus">Waiting</span>
             </div>
-            <div id="reviewContent" class="text-sm space-y-3 max-h-[600px] overflow-y-auto">
-              <p class="text-[var(--muted)]">Scan a target to analyze structure.</p>
+            <div id="reviewContent" class="text-sm flex-1 overflow-y-auto pr-2" style="max-height: 500px;">
+              <p class="text-[var(--muted)] text-xs">Scan a target to see real-time analysis.</p>
             </div>
           </div>
         </div>
 
         <!-- Right Column: Preview & Files -->
-        <div class="xl:col-span-1 space-y-6">
+        <div class="xl:col-span-1 space-y-5">
           
           <!-- Live Preview -->
           <div class="reveal result-card">
             <div class="flex items-center justify-between mb-3">
-              <h3 class="font-semibold">Live Preview</h3>
-              <span class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded hidden" id="previewLive">ONLINE</span>
+              <h3 class="font-semibold text-sm">Live Preview</h3>
+              <button class="text-[10px] text-[var(--accent)] hover:underline" id="refreshPreviewBtn">Refresh</button>
             </div>
-            <div class="preview-frame bg-gray-100" id="previewContainer">
-              <div class="flex flex-col items-center justify-center h-[400px] text-gray-400 text-sm p-4">
-                <svg class="w-16 h-16 mb-2 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                <p class="text-center">Functional preview will render here</p>
+            <div class="preview-frame" id="previewContainer">
+              <div class="flex items-center justify-center h-full text-gray-400 text-xs">
+                <p>Preview will render here</p>
               </div>
             </div>
           </div>
 
           <!-- Code View -->
           <div class="reveal result-card">
-            <div class="flex items-center border-b border-[var(--border)] mb-3 -mx-5 -mt-5 px-5 pt-2">
-              <button class="tab-btn active" onclick="switchTab('html')">index.html</button>
-              <button class="tab-btn" onclick="switchTab('css')">styles.css</button>
-              <button class="tab-btn" onclick="switchTab('js')">scripts.js</button>
+            <div class="flex items-center border-b border-[var(--border)] mb-3 -mx-5 -mt-5 px-5 pt-1">
+              <button class="tab-btn active" data-tab="html">index.html</button>
+              <button class="tab-btn" data-tab="css">style.css</button>
+              <button class="tab-btn" data-tab="js">main.js</button>
             </div>
             <div class="code-block font-mono text-[var(--fg)]" id="codeView">
-              <span class="text-[var(--muted)]">// Awaiting scan...</span>
+              <span class="text-[var(--muted)]">// No code generated yet</span>
             </div>
           </div>
         </div>
@@ -368,50 +401,60 @@
   </div>
 
   <script>
-    // === State ===
+    // === State Initialization ===
     let scanActive = false;
-    let buildPackage = null; // Holds the zip structure: { 'index.html': string, 'assets': { name: blob } }
-    let previewData = null; // Holds blob URLs for preview: { 'assets': { name: blobUrl } }
+    let generatedFiles = null;
     let startTime = 0;
     let timerInterval = null;
-
-    // CORS Proxy
-    const PROXY = 'https://corsproxy.io/?';
-
-    // === DOM References ===
-    const els = {};
+    let currentTab = 'html';
     
+    // DOM Elements
+    const els = {
+      consoleOutput: null, progressFill: null, progressPercent: null,
+      filesFound: null, depthLevel: null, timeElapsed: null,
+      codeView: null, previewContainer: null, scanBtn: null,
+      downloadBtn: null, targetInput: null, reviewContent: null,
+      reviewStatus: null, clearBtn: null, refreshPreviewBtn: null
+    };
+
+    // Proxy to bypass CORS
+    const PROXY_URL = 'https://api.allorigins.win/raw?url=';
+
     document.addEventListener('DOMContentLoaded', () => {
-      els.consoleOutput = document.getElementById('consoleOutput');
-      els.progressFill = document.getElementById('progressFill');
-      els.progressPercent = document.getElementById('progressPercent');
-      els.filesFound = document.getElementById('filesFound');
-      els.timeElapsed = document.getElementById('timeElapsed');
-      els.codeView = document.getElementById('codeView');
-      els.previewContainer = document.getElementById('previewContainer');
-      els.scanBtn = document.getElementById('scanBtn');
-      els.downloadBtn = document.getElementById('downloadBtn');
-      els.targetInput = document.getElementById('targetInput');
-      els.reviewContent = document.getElementById('reviewContent');
-      els.reviewStatus = document.getElementById('reviewStatus');
-      els.previewLive = document.getElementById('previewLive');
+      // Cache DOM elements
+      Object.keys(els).forEach(key => {
+        els[key] = document.getElementById(key) || document.getElementById(key.replace(/([A-Z])/g, (g) => g.toLowerCase())); // simple fallback attempt
+      });
+      // Manual mapping for specific IDs that differ
+      els.refreshPreviewBtn = document.getElementById('refreshPreviewBtn');
+      
+      // Bind Events
+      if(els.scanBtn) els.scanBtn.addEventListener('click', startRealScan);
+      if(els.clearBtn) els.clearBtn.addEventListener('click', clearAll);
+      if(els.downloadBtn) els.downloadBtn.addEventListener('click', downloadRealZip);
+      if(els.refreshPreviewBtn) els.refreshPreviewBtn.addEventListener('click', refreshPreview);
+      
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => switchTab(e.target.dataset.tab));
+      });
     });
 
     // === Utilities ===
     function log(msg, type = 'info') {
+      if(!els.consoleOutput) return;
       const colors = {
         info: 'var(--fg)', success: 'var(--accent)', warning: 'var(--warning)',
         error: 'var(--danger)', system: 'var(--muted)', scan: 'var(--info)'
       };
       const prefixes = { info: 'INFO', success: 'OK', warning: 'WARN', error: 'ERR', system: 'SYS', scan: 'SCAN' };
+      
       const line = document.createElement('div');
       line.className = 'log-line';
       line.style.color = colors[type] || 'var(--fg)';
       line.textContent = `[${prefixes[type] || 'LOG'}] ${msg}`;
-      if (els.consoleOutput) {
-        els.consoleOutput.appendChild(line);
-        els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
-      }
+      
+      els.consoleOutput.appendChild(line);
+      els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
     }
 
     function setProgress(pct) {
@@ -431,363 +474,268 @@
       if (timerInterval) clearInterval(timerInterval);
     }
 
-    // === Helper: Resolve URL ===
-    function resolveUrl(base, relative) {
-      try {
-        return new URL(relative, base).href;
-      } catch (e) {
-        return null;
-      }
-    }
-
-    // === Helper: Get Extension ===
-    function getExtension(url) {
-      try {
-        const pathname = new URL(url).pathname;
-        const ext = pathname.split('.').pop().toLowerCase();
-        // Filter valid extensions
-        if (/^[a-z0-9]{1,5}$/.test(ext) && ext !== pathname) return ext;
-      } catch (e) {}
-      return 'bin'; // default
-    }
-
-    // === Engine Core ===
+    // === Core Logic ===
     async function startRealScan() {
-      if (scanActive) return;
-      const targetUrl = els.targetInput.value.trim();
+      if (scanActive || !els.targetInput) return;
       
-      if (!targetUrl) { log('Please enter a URL', 'error'); return; }
-      try { new URL(targetUrl); } catch (e) { log('Invalid URL format', 'error'); return; }
+      const url = els.targetInput.value.trim();
+      if (!url) { log('Please enter a URL', 'error'); return; }
+      
+      try { new URL(url); } catch (e) { log('Invalid URL format', 'error'); return; }
 
-      // Reset
+      // Reset State
       scanActive = true;
-      buildPackage = { 'assets': {} };
-      previewData = { 'assets': {} };
+      generatedFiles = null;
       if(els.downloadBtn) els.downloadBtn.disabled = true;
       if(els.consoleOutput) els.consoleOutput.innerHTML = '';
-      if(els.previewLive) els.previewLive.classList.add('hidden');
       
-      log('Initializing deep scan engine...', 'system');
-      log(`Target: ${targetUrl}`, 'info');
+      log('Initializing scan engine...', 'system');
+      log(`Target: ${url}`, 'info');
       startTimer();
 
       // UI Lock
       if(els.scanBtn) {
-        els.scanBtn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity="0.25"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Scanning...';
+        els.scanBtn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity="0.25"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Scanning...';
         els.scanBtn.disabled = true;
       }
       setProgress(0);
 
       try {
-        // 1. Fetch Main HTML
-        log('Fetching main document...', 'scan');
-        const htmlUrl = PROXY + encodeURIComponent(targetUrl);
-        const response = await fetch(htmlUrl);
+        // Step 1: Fetch
+        log('Resolving connection...', 'scan');
+        setProgress(10);
+        
+        const response = await fetch(PROXY_URL + encodeURIComponent(url));
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
-        const originalHtml = await response.text();
-        log(`Received document (${originalHtml.length} bytes)`, 'success');
-        setProgress(10);
+        log('Connection established', 'success');
+        setProgress(30);
 
-        // 2. Parse DOM for Preview & Analysis
+        const htmlText = await response.text();
+        log(`Received ${htmlText.length} bytes`, 'info');
+        setProgress(50);
+
+        // Step 2: Parse
+        log('Parsing DOM structure...', 'scan');
         const parser = new DOMParser();
-        const doc = parser.parseFromString(originalHtml, 'text/html');
+        const doc = parser.parseFromString(htmlText, 'text/html');
         
-        // --- PREVIEW LOGIC: Use Target Online ---
-        // Inject <base> to make sure relative links in preview load from the target
-        const baseTag = doc.createElement('base');
-        baseTag.href = targetUrl;
-        if (doc.head) doc.head.prepend(baseTag);
+        // Step 3: Extract & Analyze
+        const analysis = analyzeDom(doc, url);
+        setProgress(70);
         
-        const previewHtml = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
-        
-        // Render Live Preview immediately using online resources
-        if(els.previewContainer) {
-          els.previewContainer.innerHTML = `<iframe id="livePreviewFrame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>`;
-          const iframe = document.getElementById('livePreviewFrame');
-          if(iframe) iframe.srcdoc = previewHtml;
-          if(els.previewLive) els.previewLive.classList.remove('hidden');
-          log('Live Preview loaded with online target resources', 'success');
-        }
-        setProgress(20);
+        log(`Found ${analysis.scripts.length} scripts, ${analysis.styles.length} styles`, 'info');
 
-        // --- BUILD LOGIC: Collect info for local build ---
-        // We need a fresh parse for the build process to modify paths locally
-        const buildDoc = parser.parseFromString(originalHtml, 'text/html');
-        const resources = {
-          css: [],
-          js: [],
-          img: [],
-          fonts: [],
-          other: [] // video, audio, etc
-        };
+        // Step 4: Generate Build
+        log('Generating source files...', 'scan');
+        await generateBuildPackage(doc, url, analysis);
+        setProgress(90);
 
-        // Deep Extraction
-        log('Analyzing DOM tree...', 'scan');
-        
-        // 1. Tags
-        // CSS
-        buildDoc.querySelectorAll('link[rel="stylesheet"]').forEach(l => {
-          const u = resolveUrl(targetUrl, l.getAttribute('href'));
-          if (u) resources.css.push({ url: u, type: 'css', source: l });
-        });
-        
-        // JS
-        buildDoc.querySelectorAll('script[src]').forEach(s => {
-          const u = resolveUrl(targetUrl, s.getAttribute('src'));
-          if (u) resources.js.push({ url: u, type: 'js', source: s });
-        });
-
-        // Images
-        buildDoc.querySelectorAll('img[src]').forEach(i => {
-          const u = resolveUrl(targetUrl, i.getAttribute('src'));
-          if (u) resources.img.push({ url: u, type: 'img', source: i });
-        });
-        // Srcset
-        buildDoc.querySelectorAll('img[srcset], source[srcset]').forEach(i => {
-          const srcset = i.getAttribute('srcset');
-          if(srcset) {
-            srcset.split(',').forEach(part => {
-              const urlPart = part.trim().split(' ')[0];
-              const u = resolveUrl(targetUrl, urlPart);
-              if (u) resources.img.push({ url: u, type: 'img', source: i });
-            });
-          }
-        });
-
-        // 2. Inline Styles (Background Images)
-        buildDoc.querySelectorAll('[style*="url("]').forEach(el => {
-          const style = el.getAttribute('style');
-          const matches = style.match(/url\(['"]?(.*?)['"]?\)/g);
-          if(matches) {
-            matches.forEach(m => {
-              const raw = m.replace(/url\(['"]?/, '').replace(/['"]?\)/, '');
-              const u = resolveUrl(targetUrl, raw);
-              if(u) resources.img.push({ url: u, type: 'img', source: el });
-            });
-          }
-        });
-
-        // 3. Deep CSS Analysis (Fonts, BG Images inside CSS)
-        // We process CSS files later, but we add them to the queue here.
-        // Note: We will parse the content *after* fetching the CSS.
-
-        log(`Found ${resources.css.length} CSS links, ${resources.js.length} JS links, ${resources.img.length} Images.`, 'info');
-        
-        const totalAssets = resources.css.length + resources.js.length + resources.img.length;
-        if(els.filesFound) els.filesFound.textContent = totalAssets;
-
-        // Process and Download
-        let processedCount = 0;
-        const assetMap = {}; // Original URL -> Local Filename
-
-        const processItem = async (item) => {
-          const { url, type, source } = item;
-          if (!url || url.startsWith('data:')) return;
-
-          try {
-            const proxiedUrl = PROXY + encodeURIComponent(url);
-            const res = await fetch(proxiedUrl);
-            if (!res.ok) throw new Error('Fetch fail');
-            
-            let blob = await res.blob();
-            
-            // Special Handling: If CSS, we need to parse it for more assets
-            if (type === 'css') {
-              const cssText = await blob.text();
-              // Regex for url() inside CSS
-              const cssMatches = cssText.match(/url\(['"]?(.*?)['"]?\)/g);
-              if (cssMatches) {
-                for (const m of cssMatches) {
-                  let raw = m.replace(/url\(['"]?/, '').replace(/['"]?\)/, '');
-                  // Handle relative paths in CSS
-                  let assetUrl = resolveUrl(url, raw); // Resolve relative to CSS file URL
-                  
-                  if (assetUrl && !assetUrl.startsWith('data:')) {
-                    // Download this deep asset (font/image)
-                    try {
-                      const assetRes = await fetch(PROXY + encodeURIComponent(assetUrl));
-                      const assetBlob = await assetRes.blob();
-                      const assetName = `asset_${Object.keys(buildPackage.assets).length}.${getExtension(assetUrl)}`;
-                      
-                      buildPackage.assets[assetName] = assetBlob;
-                      previewData.assets[assetName] = URL.createObjectURL(assetBlob);
-                      assetMap[assetUrl] = `assets/${assetName}`;
-
-                      // Rewrite the CSS text
-                      // Note: This is a simple replace. Robust CSS rewriting is complex.
-                      const escapedRaw = raw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                      const regex = new RegExp(`url\\(['"]?${escapedRaw}['"]?\\)`, 'g');
-                      blob = new Blob([cssText.replace(regex, `url(assets/${assetName})`), { type: 'text/css' }]);
-
-                    } catch (e) {
-                      // console.log('Deep asset failed', assetUrl);
-                    }
-                  }
-                }
-              }
-            }
-
-            // Save the asset
-            const name = `asset_${Object.keys(buildPackage.assets).length}.${getExtension(url)}`;
-            buildPackage.assets[name] = blob;
-            previewData.assets[name] = URL.createObjectURL(blob);
-            assetMap[url] = `assets/${name}`;
-
-            // Rewrite HTML source tag
-            if (source) {
-              if (type === 'css') source.setAttribute('href', `assets/${name}`);
-              else if (type === 'js') source.setAttribute('src', `assets/${name}`);
-              else if (type === 'img') {
-                if(source.getAttribute('src') === url) source.setAttribute('src', `assets/${name}`);
-                // Srcset handling is complex, skipped for simplicity in this build
-              }
-            }
-
-            processedCount++;
-            setProgress(20 + (processedCount / totalAssets) * 60);
-          } catch (e) {
-            log(`Failed: ${url.substring(0, 40)}...`, 'warning');
-          }
-        };
-
-        // Download CSS first to find fonts/images
-        for (const item of resources.css) await processItem(item);
-        for (const item of resources.js) await processItem(item);
-        for (const item of resources.img) await processItem(item);
-
-        // Finalize HTML
-        buildPackage['index.html'] = '<!DOCTYPE html>\n' + buildDoc.documentElement.outerHTML;
-        
-        // Generate Meta
-        buildPackage['package.json'] = JSON.stringify({
-          name: "mind-key-build",
-          version: "1.0.0",
-          description: "Generated by Mind Key Deep Scanner",
-          scripts: { start: "npx serve ." }
-        }, null, 2);
-
-        updateAnalysis(resources);
-        log('Build ready.', 'success');
+        // Step 5: Finalize
+        updateUI(analysis);
+        log('Scan complete!', 'success');
         setProgress(100);
+
         if(els.downloadBtn) els.downloadBtn.disabled = false;
-        switchTab('html');
 
       } catch (err) {
         log(`Error: ${err.message}`, 'error');
-        log('Tip: The target might be blocking access or invalid.', 'warning');
+        console.error(err);
       } finally {
         scanActive = false;
         stopTimer();
         if(els.scanBtn) {
-          els.scanBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>Deep Scan';
+          els.scanBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg> Scan';
           els.scanBtn.disabled = false;
         }
       }
     }
 
-    function updateAnalysis(resources) {
+    function analyzeDom(doc, url) {
+      const data = {
+        title: doc.title || 'Unknown',
+        description: '',
+        scripts: [], styles: [], images: [], links: [], meta: []
+      };
+
+      doc.querySelectorAll('meta').forEach(m => {
+        const name = m.getAttribute('name') || m.getAttribute('property');
+        const content = m.getAttribute('content');
+        if (name && content) {
+          data.meta.push({ name, content });
+          if (name === 'description') data.description = content;
+        }
+      });
+
+      doc.querySelectorAll('script').forEach(s => {
+        if (s.src) data.scripts.push({ type: 'external', src: s.src });
+        else if (s.innerText) data.scripts.push({ type: 'inline', content: s.innerText.substring(0, 50) + '...' });
+      });
+
+      doc.querySelectorAll('link[rel="stylesheet"]').forEach(l => data.styles.push(l.href));
+      doc.querySelectorAll('style').forEach(s => data.styles.push({ inline: true, content: s.innerText.substring(0, 50) + '...' }));
+      doc.querySelectorAll('img').forEach(i => { if(i.src) data.images.push(i.src); });
+      doc.querySelectorAll('a').forEach(a => { if(a.href) data.links.push(a.href); });
+
+      return data;
+    }
+
+    async function generateBuildPackage(doc, url, analysis) {
+      const domain = new URL(url).hostname;
+      
+      // 1. Prepare Clean HTML
+      // We remove inline scripts/styles if we plan to extract them, but for a simple scanner, 
+      // we keep them in HTML but also provide extracted versions in separate files.
+      
+      const htmlContent = doc.documentElement.outerHTML;
+      
+      // 2. Extract CSS
+      let cssContent = "/* Extracted Styles */\n\n";
+      doc.querySelectorAll('style').forEach(s => {
+          cssContent += s.innerText + "\n\n";
+      });
+      
+      // 3. Extract JS
+      let jsContent = "// Extracted Scripts\n\n";
+      doc.querySelectorAll('script').forEach(s => {
+          if(!s.src && s.innerText) {
+              jsContent += s.innerText + "\n\n";
+          }
+      });
+
+      // 4. Package JSON
+      const pkg = {
+        name: `${domain.replace(/[^a-z0-9]/g, '-')}-clone`,
+        version: "1.0.0",
+        description: `Clone of ${url} generated by Mind Key`,
+        scripts: { start: "npx serve ." },
+        keywords: ["mind-key"],
+        license: "MIT"
+      };
+
+      generatedFiles = {
+        'index.html': htmlContent,
+        'style.css': cssContent,
+        'main.js': jsContent,
+        'package.json': JSON.stringify(pkg, null, 2)
+      };
+
+      switchTab('html');
+    }
+
+    function updateUI(analysis) {
       if(els.reviewStatus) {
         els.reviewStatus.textContent = 'Analyzed';
-        els.reviewStatus.style.color = 'var(--accent)';
+        els.reviewStatus.className = "text-[10px] px-2 py-1 rounded bg-[rgba(0,255,157,0.1)] text-[var(--accent)]";
       }
+
+      const tags = `
+        <span class="feature-tag tag-core">${analysis.title.substring(0, 20)}</span>
+        <span class="feature-tag tag-style">${analysis.styles.length} Styles</span>
+        <span class="feature-tag tag-script">${analysis.scripts.length} Scripts</span>
+        <span class="feature-tag tag-core">${analysis.images.length} Images</span>
+      `;
+
+      const metaList = analysis.meta.map(m => 
+        `<div class="flex justify-between text-xs border-b border-[var(--border)] py-1.5">
+          <span class="text-[var(--muted)]">${m.name}</span>
+          <span class="text-right truncate ml-2 max-w-[140px] text-[var(--fg)]">${m.content}</span>
+        </div>`
+      ).join('');
+
       if(els.reviewContent) {
         els.reviewContent.innerHTML = `
-          <div class="space-y-2 text-xs">
-            <div class="flex justify-between border-b border-[var(--border)] py-1">
-              <span class="text-[var(--muted)]">Build Status</span>
-              <span class="text-[var(--accent)]">Ready</span>
-            </div>
-            <div class="flex justify-between border-b border-[var(--border)] py-1">
-              <span class="text-[var(--muted)]">Total Assets</span>
-              <span>${Object.keys(buildPackage.assets).length}</span>
-            </div>
-            <div class="flex justify-between border-b border-[var(--border)] py-1">
-              <span class="text-[var(--muted)]">CSS Files</span>
-              <span>${resources.css.length}</span>
-            </div>
-            <div class="flex justify-between border-b border-[var(--border)] py-1">
-              <span class="text-[var(--muted)]">JS Files</span>
-              <span>${resources.js.length}</span>
-            </div>
-            <div class="flex justify-between border-b border-[var(--border)] py-1">
-              <span class="text-[var(--muted)]">Images</span>
-              <span>${resources.img.length}</span>
-            </div>
-          </div>
-          <div class="mt-4 p-3 bg-[var(--bg)] rounded text-xs text-[var(--fg)]">
-            <p class="font-bold mb-1">Deep Scan Info:</p>
-            <p class="text-[var(--muted)]">
-              - CSS parsed for fonts & backgrounds.<br>
-              - Inline styles analyzed.<br>
-              - All paths localized for ZIP.
-            </p>
+          <div class="mb-4">${tags}</div>
+          <h4 class="text-[10px] uppercase text-[var(--muted)] mb-2 font-bold tracking-wider">Metadata</h4>
+          <div class="mb-4">${metaList || '<p class="text-xs text-[var(--muted)]">No metadata found</p>'}</div>
+          
+          <h4 class="text-[10px] uppercase text-[var(--muted)] mb-2 font-bold tracking-wider">External Scripts</h4>
+          <div class="text-[10px] space-y-1 max-h-[120px] overflow-y-auto font-mono">
+            ${analysis.scripts.filter(s => s.type === 'external').map(s => `<div class="truncate text-[var(--info)]">${s.src}</div>`).join('') || '<div class="text-[var(--muted)]">None</div>'}
           </div>
         `;
       }
+
+      // Stats
+      if(els.filesFound) els.filesFound.textContent = analysis.images.length;
+      if(els.depthLevel) els.depthLevel.textContent = analysis.scripts.length;
+      
+      refreshPreview();
     }
 
     function switchTab(tab) {
-      if(!els.codeView || !buildPackage) return;
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      let content = '';
-      
-      if (tab === 'html') {
-        content = buildPackage['index.html'] || '';
-        document.querySelector('.tab-btn:first-child')?.classList.add('active');
-      } else if (tab === 'css') {
-        const cssKey = Object.keys(buildPackage.assets).find(k => k.endsWith('.css'));
-        if (cssKey && buildPackage.assets[cssKey] instanceof Blob) {
-             // For display, we'd need to read the blob. Since this is a quick viewer:
-             content = `/* Content inside ${cssKey} */\n/* View full file in ZIP */`;
-        } else {
-             content = '/* No CSS found */';
-        }
-        document.querySelector('.tab-btn:nth-child(2)')?.classList.add('active');
-      } else if (tab === 'js') {
-        const jsKey = Object.keys(buildPackage.assets).find(k => k.endsWith('.js'));
-        content = `// ${jsKey || 'script.js'} included in build.\n// View full file in ZIP`;
-        document.querySelector('.tab-btn:nth-child(3)')?.classList.add('active');
+      currentTab = tab;
+      if(!els.codeView) return;
+
+      // Update Tab UI
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        if(b.dataset.tab === tab) b.classList.add('active');
+        else b.classList.remove('active');
+      });
+
+      // Map logical names to file keys
+      const fileMap = {
+          'html': 'index.html',
+          'css': 'style.css',
+          'js': 'main.js'
+      };
+
+      const key = fileMap[tab];
+      if (generatedFiles && generatedFiles[key]) {
+        els.codeView.textContent = generatedFiles[key];
+      } else {
+        els.codeView.innerHTML = `<span class="text-[var(--muted)]">// No ${tab} file generated or content is empty.</span>`;
       }
+    }
+
+    function refreshPreview() {
+      if(!generatedFiles || !els.previewContainer) return;
       
-      els.codeView.textContent = content;
+      // Use srcdoc for instant preview
+      // Note: External resources often fail due to CORS in srcdoc iframes without a proxy
+      els.previewContainer.innerHTML = `<iframe id="previewFrame" sandbox="allow-scripts allow-same-origin"></iframe>`;
+      const iframe = document.getElementById('previewFrame');
+      if(iframe) {
+        iframe.srcdoc = generatedFiles['index.html'];
+      }
     }
 
     async function downloadRealZip() {
-      if(!buildPackage) return;
-      log('Packing ZIP...', 'system');
+      if(!generatedFiles) return;
+      log('Packing files...', 'system');
 
       try {
         const zip = new JSZip();
-        zip.file('index.html', buildPackage['index.html']);
-        zip.file('package.json', buildPackage['package.json']);
-        
-        const assetsFolder = zip.folder('assets');
-        for (const [name, blob] of Object.entries(buildPackage.assets)) {
-          assetsFolder.file(name, blob);
-        }
+        Object.keys(generatedFiles).forEach(filename => {
+          zip.file(filename, generatedFiles[filename]);
+        });
 
         const content = await zip.generateAsync({ type: 'blob' });
-        saveAs(content, 'mind-key-build.zip');
-        log('ZIP downloaded!', 'success');
+        saveAs(content, 'mind-key-scan.zip');
+        log('Download started', 'success');
       } catch(e) {
-        log('ZIP creation failed', 'error');
+        log('Failed to create ZIP', 'error');
       }
     }
 
     function clearAll() {
       if(scanActive) return;
-      if(els.consoleOutput) els.consoleOutput.innerHTML = '<div class="text-[var(--muted)]">[SYS] Cleared</div>';
+      if(els.consoleOutput) els.consoleOutput.innerHTML = '<div class="text-[var(--muted)]">[SYS] Session Cleared</div>';
       if(els.progressFill) els.progressFill.style.width = '0%';
+      if(els.progressPercent) els.progressPercent.textContent = '0%';
       if(els.timeElapsed) els.timeElapsed.textContent = '0s';
       if(els.filesFound) els.filesFound.textContent = '0';
-      if(els.previewContainer) els.previewContainer.innerHTML = '<div class="flex flex-col items-center justify-center h-[400px] text-gray-400 text-sm p-4"><svg class="w-16 h-16 mb-2 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg><p class="text-center">Cleared</p></div>';
-      if(els.reviewContent) els.reviewContent.innerHTML = '<p class="text-[var(--muted)]">Scan a target to analyze.</p>';
+      if(els.depthLevel) els.depthLevel.textContent = '0';
+      if(els.reviewContent) els.reviewContent.innerHTML = '<p class="text-[var(--muted)] text-xs">Ready for new scan.</p>';
       if(els.codeView) els.codeView.innerHTML = '<span class="text-[var(--muted)]">// Cleared</span>';
-      if(els.previewLive) els.previewLive.classList.add('hidden');
-      buildPackage = null;
-      previewData = null;
+      if(els.previewContainer) els.previewContainer.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400 text-xs"><p>Preview cleared</p></div>';
+      if(els.targetInput) els.targetInput.value = '';
+      generatedFiles = null;
       if(els.downloadBtn) els.downloadBtn.disabled = true;
+      if(els.reviewStatus) {
+        els.reviewStatus.textContent = 'Waiting';
+        els.reviewStatus.className = "text-[10px] px-2 py-1 rounded bg-[var(--bg)] text-[var(--muted)]";
+      }
     }
   </script>
 </body>
