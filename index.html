@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mind Key - Real Universal Scanner</title>
+  <title>Mind Key - Deep Clone Engine</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -13,7 +13,7 @@
       --bg: #0a0a0f;
       --bg-secondary: #12121a;
       --fg: #e8e8ec;
-      --muted: #6a6a7e;
+      --muted: #5a5a6e;
       --accent: #00ff9d;
       --accent-dim: #00cc7d;
       --card: #16161f;
@@ -34,7 +34,6 @@
 
     .font-mono { font-family: 'JetBrains Mono', monospace; }
 
-    /* Background Effects */
     .grid-bg {
       position: fixed;
       inset: 0;
@@ -55,7 +54,7 @@
     .orb {
       position: fixed;
       border-radius: 50%;
-      filter: blur(120px);
+      filter: blur(100px);
       pointer-events: none;
       z-index: 0;
       opacity: 0.4;
@@ -64,7 +63,7 @@
     .orb-1 {
       width: 600px;
       height: 600px;
-      background: radial-gradient(circle, rgba(0, 255, 157, 0.15), transparent 70%);
+      background: radial-gradient(circle, rgba(0, 255, 157, 0.12), transparent 70%);
       top: -200px;
       right: -200px;
     }
@@ -72,12 +71,11 @@
     .orb-2 {
       width: 500px;
       height: 500px;
-      background: radial-gradient(circle, rgba(0, 170, 255, 0.1), transparent 70%);
+      background: radial-gradient(circle, rgba(0, 170, 255, 0.08), transparent 70%);
       bottom: -100px;
       left: -100px;
     }
 
-    /* Components */
     .console-window {
       background: var(--card);
       border: 1px solid var(--border);
@@ -88,7 +86,7 @@
 
     .console-header {
       background: var(--bg-secondary);
-      padding: 10px 16px;
+      padding: 12px 16px;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -98,10 +96,8 @@
     .console-dot { width: 10px; height: 10px; border-radius: 50%; }
     .console-body {
       padding: 16px;
-      height: 240px;
+      height: 220px;
       overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: var(--border) transparent;
     }
     .console-body::-webkit-scrollbar { width: 6px; }
     .console-body::-webkit-scrollbar-track { background: transparent; }
@@ -110,9 +106,8 @@
     .log-line {
       opacity: 0;
       animation: fadeIn 0.2s ease forwards;
-      margin: 4px 0;
-      font-size: 12px;
-      line-height: 1.4;
+      margin: 3px 0;
+      font-size: 11px;
     }
     @keyframes fadeIn { to { opacity: 1; } }
 
@@ -120,7 +115,7 @@
       background: var(--accent);
       color: var(--bg);
       font-weight: 600;
-      padding: 10px 20px;
+      padding: 12px 24px;
       border-radius: 8px;
       border: none;
       cursor: pointer;
@@ -131,26 +126,22 @@
       gap: 8px;
     }
     .btn-primary:hover:not(:disabled) {
-      filter: brightness(1.1);
-      box-shadow: 0 0 20px rgba(0, 255, 157, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(0, 255, 157, 0.3);
     }
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .btn-secondary {
       background: transparent;
       color: var(--fg);
       font-weight: 500;
-      padding: 10px 16px;
+      padding: 12px 20px;
       border-radius: 8px;
       border: 1px solid var(--border);
       cursor: pointer;
       transition: all 0.2s ease;
     }
     .btn-secondary:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
-    .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .btn-download {
       background: linear-gradient(135deg, #00aa77, #00ddaa);
@@ -167,7 +158,7 @@
       width: 100%;
       justify-content: center;
     }
-    .btn-download:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 25px rgba(0, 221, 170, 0.4); }
+    .btn-download:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(0, 221, 170, 0.4); }
     .btn-download:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .result-card {
@@ -177,7 +168,7 @@
       padding: 20px;
     }
 
-    .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .progress-bar { height: 4px; background: var(--border); border-radius: 3px; overflow: hidden; }
     .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #00ddff); transition: width 0.3s ease; }
 
     .input-wrapper input {
@@ -185,25 +176,30 @@
       background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 12px 14px;
+      padding: 14px 16px;
       color: var(--fg);
       font-family: 'JetBrains Mono', monospace;
       font-size: 13px;
       transition: all 0.2s ease;
     }
-    .input-wrapper input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0, 255, 157, 0.1); }
+    .input-wrapper input:focus { outline: none; border-color: var(--accent); }
 
     .preview-frame {
       background: #fff;
-      border-radius: 6px;
+      border-radius: 8px;
       overflow: hidden;
-      height: 280px;
+      height: 400px;
       position: relative;
     }
-    .preview-frame iframe { width: 100%; height: 100%; border: none; background: #fff; }
+    .preview-frame iframe { 
+      width: 100%; 
+      height: 100%; 
+      border: none; 
+      background: white;
+    }
 
     .tab-btn {
-      padding: 8px 14px;
+      padding: 10px 16px;
       background: transparent;
       border: none;
       color: var(--muted);
@@ -213,17 +209,15 @@
       font-size: 12px;
       border-bottom: 2px solid transparent;
       transition: all 0.2s;
-      margin-bottom: -1px;
     }
     .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
-    .tab-btn:hover { color: var(--fg); }
 
     .code-block {
       background: var(--bg);
-      border-radius: 6px;
-      padding: 14px;
+      border-radius: 8px;
+      padding: 16px;
       overflow: auto;
-      font-size: 11px;
+      font-size: 10px;
       line-height: 1.5;
       height: 220px;
       white-space: pre-wrap;
@@ -231,24 +225,15 @@
       border: 1px solid var(--border);
     }
 
-    .feature-tag {
-      display: inline-block;
-      padding: 3px 8px;
+    .reveal { opacity: 0; transform: translateY(20px); animation: revealUp 0.6s ease forwards; }
+    @keyframes revealUp { to { opacity: 1; transform: translateY(0); } }
+    
+    .status-badge {
+      padding: 2px 8px;
       border-radius: 4px;
       font-size: 10px;
       font-weight: 600;
-      margin: 2px;
       text-transform: uppercase;
-    }
-    .tag-core { background: rgba(0, 255, 157, 0.15); color: var(--accent); }
-    .tag-style { background: rgba(255, 170, 0, 0.15); color: var(--warning); }
-    .tag-script { background: rgba(0, 170, 255, 0.15); color: var(--info); }
-    
-    .reveal { opacity: 0; transform: translateY(15px); animation: revealUp 0.5s ease forwards; }
-    @keyframes revealUp { to { opacity: 1; transform: translateY(0); } }
-    
-    @media (max-width: 1280px) {
-      .xl\:grid-cols-3 { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -261,31 +246,28 @@
     <div class="max-w-7xl mx-auto">
       
       <!-- Header -->
-      <header class="reveal mb-8">
+      <header class="reveal mb-6">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-4">
-            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#00ff9d] to-[#00aa66] flex items-center justify-center shadow-lg shadow-[rgba(0,255,157,0.2)]">
-              <svg class="w-5 h-5 text-[#0a0a0f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#00ff9d] to-[#00aa66] flex items-center justify-center shadow-lg shadow-[rgba(0,255,157,0.2)]">
+              <svg class="w-6 h-6 text-[#0a0a0f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
               </svg>
             </div>
             <div>
-              <h1 class="text-xl font-bold tracking-tight">Mind Key</h1>
-              <p class="text-[var(--muted)] text-xs">Universal Source Extractor</p>
+              <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Mind Key</h1>
+              <p class="text-[var(--muted)] text-sm">Deep Clone & Salvage Engine</p>
             </div>
           </div>
-          <div class="flex items-center gap-2 text-xs bg-[var(--card)] px-3 py-1.5 rounded-full border border-[var(--border)]">
-            <span class="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse"></span>
-            <span class="text-[var(--muted)] font-mono">Engine Ready</span>
-          </div>
+          <div id="statusBadge" class="status-badge bg-[var(--border)] text-[var(--muted)]">Idle</div>
         </div>
       </header>
 
       <!-- Main Grid -->
-      <div class="grid xl:grid-cols-3 gap-5">
+      <div class="grid xl:grid-cols-3 gap-6">
         
-        <!-- Left Column: Controls & Console -->
-        <div class="xl:col-span-1 space-y-5">
+        <!-- Left Column -->
+        <div class="xl:col-span-1 space-y-6">
           
           <!-- Target Input -->
           <div class="reveal console-window">
@@ -298,12 +280,12 @@
             <div class="p-4">
               <label class="block text-xs font-medium mb-2 text-[var(--muted)]">TARGET URL</label>
               <div class="input-wrapper mb-3">
-                <input type="url" id="targetInput" placeholder="https://example.com">
+                <input type="url" id="targetInput" placeholder="https://example.com" value="https://tailwindcss.com">
               </div>
               <div class="flex gap-2">
                 <button class="btn-primary flex-1" id="scanBtn">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                  Scan
+                  Deep Scan
                 </button>
                 <button class="btn-secondary" id="clearBtn">Clear</button>
               </div>
@@ -313,34 +295,34 @@
           <!-- Console Output -->
           <div class="reveal console-window">
             <div class="console-header">
-              <span class="font-mono text-xs text-[var(--muted)]">backend.log</span>
+              <span class="font-mono text-xs text-[var(--muted)]">build.log</span>
             </div>
             <div class="console-body font-mono" id="consoleOutput">
-              <div class="text-[var(--muted)]">[SYS] Mind Key Engine Initialized</div>
+              <div class="text-[var(--muted)]">[SYS] Engine Ready. Awaiting target.</div>
             </div>
           </div>
 
-          <!-- Progress -->
+          <!-- Stats -->
           <div class="reveal result-card">
-            <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center justify-between mb-3">
               <h3 class="font-semibold text-xs uppercase text-[var(--muted)]">Progress</h3>
               <span class="font-mono text-xs text-[var(--accent)]" id="progressPercent">0%</span>
             </div>
             <div class="progress-bar mb-4">
               <div class="progress-fill" id="progressFill" style="width: 0%"></div>
             </div>
-            <div class="grid grid-cols-3 gap-2 text-center text-xs">
+            <div class="grid grid-cols-3 gap-3 text-center">
               <div class="bg-[var(--bg)] rounded p-2">
-                <div class="text-lg font-bold text-[var(--accent)]" id="filesFound">0</div>
-                <div class="text-[10px] text-[var(--muted)] uppercase">Resources</div>
+                <div class="text-lg font-bold text-[var(--accent)]" id="countCss">0</div>
+                <div class="text-[10px] text-[var(--muted)] uppercase">CSS</div>
               </div>
               <div class="bg-[var(--bg)] rounded p-2">
-                <div class="text-lg font-bold text-[var(--info)]" id="depthLevel">0</div>
-                <div class="text-[10px] text-[var(--muted)] uppercase">Scripts</div>
+                <div class="text-lg font-bold text-[var(--warning)]" id="countJs">0</div>
+                <div class="text-[10px] text-[var(--muted)] uppercase">JS</div>
               </div>
               <div class="bg-[var(--bg)] rounded p-2">
-                <div class="text-lg font-bold text-[var(--warning)]" id="timeElapsed">0s</div>
-                <div class="text-[10px] text-[var(--muted)] uppercase">Time</div>
+                <div class="text-lg font-bold text-[var(--info)]" id="countImg">0</div>
+                <div class="text-[10px] text-[var(--muted)] uppercase">Images</div>
               </div>
             </div>
           </div>
@@ -349,37 +331,38 @@
           <div class="reveal result-card">
              <button class="btn-download" id="downloadBtn" disabled>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                Download Source ZIP
+                Download Build ZIP
              </button>
-             <div class="text-[10px] text-[var(--muted)] mt-3 text-center font-mono">Ready for: npm install && npm start</div>
+             <div class="text-[10px] text-[var(--muted)] mt-2 text-center font-mono">Self-contained offline build</div>
           </div>
         </div>
 
-        <!-- Middle Column: Code Review -->
-        <div class="xl:col-span-1 space-y-5">
+        <!-- Middle Column: Analysis -->
+        <div class="xl:col-span-1 space-y-6">
           <div class="reveal result-card h-full flex flex-col">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="font-semibold text-sm">Analysis</h3>
+              <h3 class="font-semibold text-sm">Salvage Report</h3>
               <span class="text-[10px] px-2 py-1 rounded bg-[var(--bg)] text-[var(--muted)]" id="reviewStatus">Waiting</span>
             </div>
-            <div id="reviewContent" class="text-sm flex-1 overflow-y-auto pr-2" style="max-height: 500px;">
-              <p class="text-[var(--muted)] text-xs">Scan a target to see real-time analysis.</p>
+            <div id="reviewContent" class="text-xs flex-1 overflow-y-auto pr-2 space-y-2">
+              <p class="text-[var(--muted)]">Salvage data will appear here.</p>
             </div>
           </div>
         </div>
 
-        <!-- Right Column: Preview & Files -->
-        <div class="xl:col-span-1 space-y-5">
+        <!-- Right Column: Preview & Code -->
+        <div class="xl:col-span-1 space-y-6">
           
           <!-- Live Preview -->
           <div class="reveal result-card">
             <div class="flex items-center justify-between mb-3">
               <h3 class="font-semibold text-sm">Live Preview</h3>
-              <button class="text-[10px] text-[var(--accent)] hover:underline" id="refreshPreviewBtn">Refresh</button>
+              <span class="text-[10px] px-2 py-1 bg-green-100 text-green-800 rounded hidden" id="previewLive">LIVE</span>
             </div>
             <div class="preview-frame" id="previewContainer">
-              <div class="flex items-center justify-center h-full text-gray-400 text-xs">
-                <p>Preview will render here</p>
+              <div class="flex flex-col items-center justify-center h-full text-gray-300 p-4">
+                <svg class="w-12 h-12 mb-2 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                <p class="text-center text-xs">Functional clone renders here</p>
               </div>
             </div>
           </div>
@@ -388,11 +371,11 @@
           <div class="reveal result-card">
             <div class="flex items-center border-b border-[var(--border)] mb-3 -mx-5 -mt-5 px-5 pt-1">
               <button class="tab-btn active" data-tab="html">index.html</button>
-              <button class="tab-btn" data-tab="css">style.css</button>
-              <button class="tab-btn" data-tab="js">main.js</button>
+              <button class="tab-btn" data-tab="css">styles.css</button>
+              <button class="tab-btn" data-tab="js">scripts.js</button>
             </div>
             <div class="code-block font-mono text-[var(--fg)]" id="codeView">
-              <span class="text-[var(--muted)]">// No code generated yet</span>
+              <span class="text-[var(--muted)]">// No build generated yet</span>
             </div>
           </div>
         </div>
@@ -401,38 +384,30 @@
   </div>
 
   <script>
-    // === State Initialization ===
+    // === State ===
     let scanActive = false;
-    let generatedFiles = null;
+    let buildPackage = null; 
     let startTime = 0;
     let timerInterval = null;
-    let currentTab = 'html';
-    
+
+    // Robust Proxy
+    const PROXY = 'https://api.allorigins.win/raw?url=';
+
     // DOM Elements
-    const els = {
-      consoleOutput: null, progressFill: null, progressPercent: null,
-      filesFound: null, depthLevel: null, timeElapsed: null,
-      codeView: null, previewContainer: null, scanBtn: null,
-      downloadBtn: null, targetInput: null, reviewContent: null,
-      reviewStatus: null, clearBtn: null, refreshPreviewBtn: null
-    };
-
-    // Proxy to bypass CORS
-    const PROXY_URL = 'https://api.allorigins.win/raw?url=';
-
+    const els = {};
+    
     document.addEventListener('DOMContentLoaded', () => {
-      // Cache DOM elements
-      Object.keys(els).forEach(key => {
-        els[key] = document.getElementById(key) || document.getElementById(key.replace(/([A-Z])/g, (g) => g.toLowerCase())); // simple fallback attempt
+      // Cache Elements
+      ['consoleOutput', 'progressFill', 'progressPercent', 'countCss', 'countJs', 'countImg', 
+       'codeView', 'previewContainer', 'scanBtn', 'downloadBtn', 'targetInput', 
+       'reviewContent', 'reviewStatus', 'previewLive', 'statusBadge', 'clearBtn'].forEach(id => {
+        els[id] = document.getElementById(id);
       });
-      // Manual mapping for specific IDs that differ
-      els.refreshPreviewBtn = document.getElementById('refreshPreviewBtn');
-      
+
       // Bind Events
-      if(els.scanBtn) els.scanBtn.addEventListener('click', startRealScan);
-      if(els.clearBtn) els.clearBtn.addEventListener('click', clearAll);
-      if(els.downloadBtn) els.downloadBtn.addEventListener('click', downloadRealZip);
-      if(els.refreshPreviewBtn) els.refreshPreviewBtn.addEventListener('click', refreshPreview);
+      els.scanBtn.addEventListener('click', startDeepScan);
+      els.clearBtn.addEventListener('click', clearAll);
+      els.downloadBtn.addEventListener('click', downloadBuild);
       
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', (e) => switchTab(e.target.dataset.tab));
@@ -441,20 +416,19 @@
 
     // === Utilities ===
     function log(msg, type = 'info') {
-      if(!els.consoleOutput) return;
       const colors = {
         info: 'var(--fg)', success: 'var(--accent)', warning: 'var(--warning)',
         error: 'var(--danger)', system: 'var(--muted)', scan: 'var(--info)'
       };
       const prefixes = { info: 'INFO', success: 'OK', warning: 'WARN', error: 'ERR', system: 'SYS', scan: 'SCAN' };
-      
       const line = document.createElement('div');
       line.className = 'log-line';
       line.style.color = colors[type] || 'var(--fg)';
       line.textContent = `[${prefixes[type] || 'LOG'}] ${msg}`;
-      
-      els.consoleOutput.appendChild(line);
-      els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
+      if (els.consoleOutput) {
+        els.consoleOutput.appendChild(line);
+        els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
+      }
     }
 
     function setProgress(pct) {
@@ -466,276 +440,298 @@
       startTime = Date.now();
       timerInterval = setInterval(() => {
         const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        if (els.timeElapsed) els.timeElapsed.textContent = `${elapsed}s`;
+        // Update some timer element if needed
       }, 1000);
     }
 
     function stopTimer() {
       if (timerInterval) clearInterval(timerInterval);
     }
+    
+    function updateStatus(text, color) {
+        if(els.statusBadge) {
+            els.statusBadge.textContent = text;
+            els.statusBadge.style.background = color;
+            els.statusBadge.style.color = color === 'var(--accent)' ? '#000' : '#fff';
+        }
+    }
 
-    // === Core Logic ===
-    async function startRealScan() {
-      if (scanActive || !els.targetInput) return;
+    // === Core Engine ===
+    async function startDeepScan() {
+      if (scanActive) return;
+      const targetUrl = els.targetInput.value.trim();
       
-      const url = els.targetInput.value.trim();
-      if (!url) { log('Please enter a URL', 'error'); return; }
-      
-      try { new URL(url); } catch (e) { log('Invalid URL format', 'error'); return; }
+      if (!targetUrl) { log('Enter a URL', 'error'); return; }
+      try { new URL(targetUrl); } catch (e) { log('Invalid URL', 'error'); return; }
 
       // Reset State
       scanActive = true;
-      generatedFiles = null;
+      buildPackage = { css: [], js: [], html: '', assets: {} };
       if(els.downloadBtn) els.downloadBtn.disabled = true;
       if(els.consoleOutput) els.consoleOutput.innerHTML = '';
+      if(els.previewLive) els.previewLive.classList.add('hidden');
       
-      log('Initializing scan engine...', 'system');
-      log(`Target: ${url}`, 'info');
+      log('Initializing Deep Clone...', 'system');
+      log(`Target: ${targetUrl}`, 'info');
+      updateStatus('Scanning', 'var(--warning)');
       startTimer();
 
       // UI Lock
-      if(els.scanBtn) {
-        els.scanBtn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity="0.25"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Scanning...';
-        els.scanBtn.disabled = true;
-      }
+      els.scanBtn.disabled = true;
+      els.scanBtn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity="0.25"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Processing';
+      
       setProgress(0);
 
       try {
-        // Step 1: Fetch
-        log('Resolving connection...', 'scan');
-        setProgress(10);
-        
-        const response = await fetch(PROXY_URL + encodeURIComponent(url));
+        // 1. Fetch Main HTML
+        log('Fetching DOM...', 'scan');
+        const response = await fetch(PROXY + encodeURIComponent(targetUrl));
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
-        log('Connection established', 'success');
-        setProgress(30);
-
         const htmlText = await response.text();
-        log(`Received ${htmlText.length} bytes`, 'info');
-        setProgress(50);
+        log(`Received document (${(htmlText.length/1024).toFixed(1)} KB)`, 'success');
+        setProgress(10);
 
-        // Step 2: Parse
-        log('Parsing DOM structure...', 'scan');
+        // 2. Parse DOM
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlText, 'text/html');
         
-        // Step 3: Extract & Analyze
-        const analysis = analyzeDom(doc, url);
-        setProgress(70);
+        // Set base for relative paths (Visual fix)
+        let base = doc.querySelector('base');
+        if (!base) {
+            base = doc.createElement('base');
+            doc.head.prepend(base);
+        }
+        base.href = targetUrl;
+
+        // 3. Extract & Inline CSS
+        log('Extracting styles...', 'scan');
+        const cssPromises = [];
+        let cssCount = 0;
+        doc.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+            const originalUrl = link.href;
+            cssPromises.push(
+                fetchResource(originalUrl)
+                    .then(text => {
+                        if(text) {
+                            const style = doc.createElement('style');
+                            style.textContent = `/* Source: ${originalUrl} */\n${text}`;
+                            link.replaceWith(style);
+                            buildPackage.css.push({ url: originalUrl, content: text });
+                            cssCount++;
+                            log(`Inlined CSS: ${originalUrl.substring(0, 40)}...`, 'info');
+                        }
+                    })
+                    .catch(() => log(`Failed CSS: ${originalUrl.substring(0, 30)}`, 'warning'))
+            );
+        });
+
+        // 4. Extract & Inline JS
+        log('Extracting scripts...', 'scan');
+        const jsPromises = [];
+        let jsCount = 0;
+        doc.querySelectorAll('script[src]').forEach(script => {
+            const originalUrl = script.src;
+            jsPromises.push(
+                fetchResource(originalUrl)
+                    .then(text => {
+                        if(text) {
+                            const newScript = doc.createElement('script');
+                            newScript.textContent = `/* Source: ${originalUrl} */\n${text}`;
+                            script.replaceWith(newScript);
+                            buildPackage.js.push({ url: originalUrl, content: text });
+                            jsCount++;
+                            log(`Inlined JS: ${originalUrl.substring(0, 40)}...`, 'info');
+                        }
+                    })
+                    .catch(() => log(`Failed JS: ${originalUrl.substring(0, 30)}`, 'warning'))
+            );
+        });
+
+        // 5. Process Images (Blob for preview, keep URL for build initially)
+        log('Processing images...', 'scan');
+        const imgPromises = [];
+        let imgCount = 0;
+        // Only process first 20 images for preview performance
+        const images = Array.from(doc.querySelectorAll('img[src]')).slice(0, 20); 
         
-        log(`Found ${analysis.scripts.length} scripts, ${analysis.styles.length} styles`, 'info');
+        images.forEach(img => {
+            imgPromises.push(
+                fetch(PROXY + encodeURIComponent(img.src))
+                .then(r => r.blob())
+                .then(blob => {
+                    const blobUrl = URL.createObjectURL(blob);
+                    img.src = blobUrl; // Live Preview uses Blob
+                    // We save the blob for the ZIP later
+                    buildPackage.assets[img.alt || `image_${imgCount}`] = { blob, url: img.src };
+                    imgCount++;
+                }).catch(() => {})
+            );
+        });
 
-        // Step 4: Generate Build
-        log('Generating source files...', 'scan');
-        await generateBuildPackage(doc, url, analysis);
-        setProgress(90);
+        // Wait for all resources
+        setProgress(30);
+        await Promise.all([...cssPromises, ...jsPromises, ...imgPromises]);
+        setProgress(80);
 
-        // Step 5: Finalize
-        updateUI(analysis);
-        log('Scan complete!', 'success');
+        // 6. Finalize HTML
+        // Remove base tag for the final build to avoid conflicts
+        if (base && base.href === targetUrl) base.remove();
+        
+        buildPackage.html = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+
+        // 7. Update UI
+        updateStats(cssCount, jsCount, imgCount);
+        renderPreview(doc);
+        updateReport(cssCount, jsCount, imgCount, targetUrl);
+        
         setProgress(100);
-
+        updateStatus('Complete', 'var(--accent)');
+        log('Build ready!', 'success');
         if(els.downloadBtn) els.downloadBtn.disabled = false;
+        if(els.previewLive) els.previewLive.classList.remove('hidden');
 
       } catch (err) {
         log(`Error: ${err.message}`, 'error');
-        console.error(err);
+        updateStatus('Failed', 'var(--danger)');
       } finally {
         scanActive = false;
         stopTimer();
-        if(els.scanBtn) {
-          els.scanBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg> Scan';
-          els.scanBtn.disabled = false;
+        els.scanBtn.disabled = false;
+        els.scanBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg> Deep Scan';
+        switchTab('html');
+      }
+    }
+
+    async function fetchResource(url) {
+        try {
+            const res = await fetch(PROXY + encodeURIComponent(url));
+            if(!res.ok) return null;
+            return await res.text();
+        } catch(e) { return null; }
+    }
+
+    function updateStats(css, js, img) {
+        if(els.countCss) els.countCss.textContent = css;
+        if(els.countJs) els.countJs.textContent = js;
+        if(els.countImg) els.countImg.textContent = img;
+    }
+
+    function renderPreview(doc) {
+        const html = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+        if(els.previewContainer) {
+            els.previewContainer.innerHTML = `<iframe id="liveFrame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>`;
+            const iframe = document.getElementById('liveFrame');
+            if(iframe) iframe.srcdoc = html;
         }
-      }
     }
 
-    function analyzeDom(doc, url) {
-      const data = {
-        title: doc.title || 'Unknown',
-        description: '',
-        scripts: [], styles: [], images: [], links: [], meta: []
-      };
-
-      doc.querySelectorAll('meta').forEach(m => {
-        const name = m.getAttribute('name') || m.getAttribute('property');
-        const content = m.getAttribute('content');
-        if (name && content) {
-          data.meta.push({ name, content });
-          if (name === 'description') data.description = content;
+    function updateReport(css, js, img, url) {
+        if(els.reviewStatus) {
+            els.reviewStatus.textContent = 'Cloned';
+            els.reviewStatus.className = "text-[10px] px-2 py-1 rounded bg-[rgba(0,255,157,0.1)] text-[var(--accent)]";
         }
-      });
-
-      doc.querySelectorAll('script').forEach(s => {
-        if (s.src) data.scripts.push({ type: 'external', src: s.src });
-        else if (s.innerText) data.scripts.push({ type: 'inline', content: s.innerText.substring(0, 50) + '...' });
-      });
-
-      doc.querySelectorAll('link[rel="stylesheet"]').forEach(l => data.styles.push(l.href));
-      doc.querySelectorAll('style').forEach(s => data.styles.push({ inline: true, content: s.innerText.substring(0, 50) + '...' }));
-      doc.querySelectorAll('img').forEach(i => { if(i.src) data.images.push(i.src); });
-      doc.querySelectorAll('a').forEach(a => { if(a.href) data.links.push(a.href); });
-
-      return data;
-    }
-
-    async function generateBuildPackage(doc, url, analysis) {
-      const domain = new URL(url).hostname;
-      
-      // 1. Prepare Clean HTML
-      // We remove inline scripts/styles if we plan to extract them, but for a simple scanner, 
-      // we keep them in HTML but also provide extracted versions in separate files.
-      
-      const htmlContent = doc.documentElement.outerHTML;
-      
-      // 2. Extract CSS
-      let cssContent = "/* Extracted Styles */\n\n";
-      doc.querySelectorAll('style').forEach(s => {
-          cssContent += s.innerText + "\n\n";
-      });
-      
-      // 3. Extract JS
-      let jsContent = "// Extracted Scripts\n\n";
-      doc.querySelectorAll('script').forEach(s => {
-          if(!s.src && s.innerText) {
-              jsContent += s.innerText + "\n\n";
-          }
-      });
-
-      // 4. Package JSON
-      const pkg = {
-        name: `${domain.replace(/[^a-z0-9]/g, '-')}-clone`,
-        version: "1.0.0",
-        description: `Clone of ${url} generated by Mind Key`,
-        scripts: { start: "npx serve ." },
-        keywords: ["mind-key"],
-        license: "MIT"
-      };
-
-      generatedFiles = {
-        'index.html': htmlContent,
-        'style.css': cssContent,
-        'main.js': jsContent,
-        'package.json': JSON.stringify(pkg, null, 2)
-      };
-
-      switchTab('html');
-    }
-
-    function updateUI(analysis) {
-      if(els.reviewStatus) {
-        els.reviewStatus.textContent = 'Analyzed';
-        els.reviewStatus.className = "text-[10px] px-2 py-1 rounded bg-[rgba(0,255,157,0.1)] text-[var(--accent)]";
-      }
-
-      const tags = `
-        <span class="feature-tag tag-core">${analysis.title.substring(0, 20)}</span>
-        <span class="feature-tag tag-style">${analysis.styles.length} Styles</span>
-        <span class="feature-tag tag-script">${analysis.scripts.length} Scripts</span>
-        <span class="feature-tag tag-core">${analysis.images.length} Images</span>
-      `;
-
-      const metaList = analysis.meta.map(m => 
-        `<div class="flex justify-between text-xs border-b border-[var(--border)] py-1.5">
-          <span class="text-[var(--muted)]">${m.name}</span>
-          <span class="text-right truncate ml-2 max-w-[140px] text-[var(--fg)]">${m.content}</span>
-        </div>`
-      ).join('');
-
-      if(els.reviewContent) {
-        els.reviewContent.innerHTML = `
-          <div class="mb-4">${tags}</div>
-          <h4 class="text-[10px] uppercase text-[var(--muted)] mb-2 font-bold tracking-wider">Metadata</h4>
-          <div class="mb-4">${metaList || '<p class="text-xs text-[var(--muted)]">No metadata found</p>'}</div>
-          
-          <h4 class="text-[10px] uppercase text-[var(--muted)] mb-2 font-bold tracking-wider">External Scripts</h4>
-          <div class="text-[10px] space-y-1 max-h-[120px] overflow-y-auto font-mono">
-            ${analysis.scripts.filter(s => s.type === 'external').map(s => `<div class="truncate text-[var(--info)]">${s.src}</div>`).join('') || '<div class="text-[var(--muted)]">None</div>'}
-          </div>
-        `;
-      }
-
-      // Stats
-      if(els.filesFound) els.filesFound.textContent = analysis.images.length;
-      if(els.depthLevel) els.depthLevel.textContent = analysis.scripts.length;
-      
-      refreshPreview();
+        if(els.reviewContent) {
+            els.reviewContent.innerHTML = `
+                <div class="space-y-2">
+                    <div class="flex justify-between border-b border-[var(--border)] py-1">
+                        <span class="text-[var(--muted)]">Target</span>
+                        <span class="text-right truncate ml-2 text-[var(--accent)]">${new URL(url).hostname}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-[var(--border)] py-1">
+                        <span class="text-[var(--muted)]">Strategy</span>
+                        <span>Inline Assets</span>
+                    </div>
+                    <div class="flex justify-between border-b border-[var(--border)] py-1">
+                        <span class="text-[var(--muted)]">CSS Injected</span>
+                        <span>${css} files</span>
+                    </div>
+                    <div class="flex justify-between border-b border-[var(--border)] py-1">
+                        <span class="text-[var(--muted)]">JS Injected</span>
+                        <span>${js} files</span>
+                    </div>
+                    <div class="flex justify-between border-b border-[var(--border)] py-1">
+                        <span class="text-[var(--muted)]">Images Proxied</span>
+                        <span>${img} files</span>
+                    </div>
+                </div>
+                <div class="mt-4 p-3 bg-[var(--bg)] rounded text-[10px] text-[var(--muted)]">
+                    <p class="font-bold text-[var(--fg)] mb-1">Clone Quality:</p>
+                    <p>HTML structure captured. External CSS & JS inlined for offline capability. Images fetched via proxy for preview.</p>
+                </div>
+            `;
+        }
     }
 
     function switchTab(tab) {
-      currentTab = tab;
-      if(!els.codeView) return;
-
-      // Update Tab UI
-      document.querySelectorAll('.tab-btn').forEach(b => {
-        if(b.dataset.tab === tab) b.classList.add('active');
-        else b.classList.remove('active');
-      });
-
-      // Map logical names to file keys
-      const fileMap = {
-          'html': 'index.html',
-          'css': 'style.css',
-          'js': 'main.js'
-      };
-
-      const key = fileMap[tab];
-      if (generatedFiles && generatedFiles[key]) {
-        els.codeView.textContent = generatedFiles[key];
-      } else {
-        els.codeView.innerHTML = `<span class="text-[var(--muted)]">// No ${tab} file generated or content is empty.</span>`;
-      }
+        if(!buildPackage) return;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        
+        let content = '';
+        if (tab === 'html') {
+            content = buildPackage.html;
+            document.querySelector('[data-tab="html"]').classList.add('active');
+        } else if (tab === 'css') {
+            content = buildPackage.css.map(c => `/* ${c.url} */\n${c.content}`).join('\n\n');
+            document.querySelector('[data-tab="css"]').classList.add('active');
+        } else if (tab === 'js') {
+            content = buildPackage.js.map(j => `// ${j.url}\n${j.content}`).join('\n\n');
+            document.querySelector('[data-tab="js"]').classList.add('active');
+        }
+        
+        if (els.codeView) {
+            els.codeView.textContent = content || 'No content captured for this type.';
+        }
     }
 
-    function refreshPreview() {
-      if(!generatedFiles || !els.previewContainer) return;
-      
-      // Use srcdoc for instant preview
-      // Note: External resources often fail due to CORS in srcdoc iframes without a proxy
-      els.previewContainer.innerHTML = `<iframe id="previewFrame" sandbox="allow-scripts allow-same-origin"></iframe>`;
-      const iframe = document.getElementById('previewFrame');
-      if(iframe) {
-        iframe.srcdoc = generatedFiles['index.html'];
-      }
-    }
+    async function downloadBuild() {
+        if(!buildPackage) return;
+        log('Packing ZIP...', 'system');
 
-    async function downloadRealZip() {
-      if(!generatedFiles) return;
-      log('Packing files...', 'system');
+        try {
+            const zip = new JSZip();
+            
+            // Main HTML
+            zip.file('index.html', buildPackage.html);
+            
+            // Separate CSS/JS for developer convenience
+            const assetsFolder = zip.folder('assets');
+            if(buildPackage.css.length > 0) {
+                const cssFile = buildPackage.css.map(c => c.content).join('\n\n');
+                assetsFolder.file('style.css', cssFile);
+            }
+            if(buildPackage.js.length > 0) {
+                const jsFile = buildPackage.js.map(j => j.content).join('\n\n');
+                assetsFolder.file('script.js', jsFile);
+            }
 
-      try {
-        const zip = new JSZip();
-        Object.keys(generatedFiles).forEach(filename => {
-          zip.file(filename, generatedFiles[filename]);
-        });
+            // Package
+            zip.file('package.json', JSON.stringify({
+                name: "mind-key-clone",
+                version: "1.0.0",
+                description: "Offline Clone",
+                scripts: { start: "npx serve ." }
+            }, null, 2));
 
-        const content = await zip.generateAsync({ type: 'blob' });
-        saveAs(content, 'mind-key-scan.zip');
-        log('Download started', 'success');
-      } catch(e) {
-        log('Failed to create ZIP', 'error');
-      }
+            const content = await zip.generateAsync({ type: 'blob' });
+            saveAs(content, `mind-key-build-${Date.now()}.zip`);
+            log('Download started', 'success');
+        } catch(e) {
+            log('ZIP failed', 'error');
+        }
     }
 
     function clearAll() {
-      if(scanActive) return;
-      if(els.consoleOutput) els.consoleOutput.innerHTML = '<div class="text-[var(--muted)]">[SYS] Session Cleared</div>';
-      if(els.progressFill) els.progressFill.style.width = '0%';
-      if(els.progressPercent) els.progressPercent.textContent = '0%';
-      if(els.timeElapsed) els.timeElapsed.textContent = '0s';
-      if(els.filesFound) els.filesFound.textContent = '0';
-      if(els.depthLevel) els.depthLevel.textContent = '0';
-      if(els.reviewContent) els.reviewContent.innerHTML = '<p class="text-[var(--muted)] text-xs">Ready for new scan.</p>';
-      if(els.codeView) els.codeView.innerHTML = '<span class="text-[var(--muted)]">// Cleared</span>';
-      if(els.previewContainer) els.previewContainer.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400 text-xs"><p>Preview cleared</p></div>';
-      if(els.targetInput) els.targetInput.value = '';
-      generatedFiles = null;
-      if(els.downloadBtn) els.downloadBtn.disabled = true;
-      if(els.reviewStatus) {
-        els.reviewStatus.textContent = 'Waiting';
-        els.reviewStatus.className = "text-[10px] px-2 py-1 rounded bg-[var(--bg)] text-[var(--muted)]";
-      }
+        if(scanActive) return;
+        if(els.consoleOutput) els.consoleOutput.innerHTML = '<div class="text-[var(--muted)]">[SYS] Cleared</div>';
+        updateStats(0,0,0);
+        setProgress(0);
+        updateStatus('Idle', 'var(--border)');
+        if(els.previewContainer) els.previewContainer.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-gray-300 p-4"><svg class="w-12 h-12 mb-2 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg><p class="text-center text-xs">Cleared</p></div>';
+        if(els.codeView) els.codeView.innerHTML = '<span class="text-[var(--muted)]">// Cleared</span>';
+        buildPackage = null;
+        if(els.downloadBtn) els.downloadBtn.disabled = true;
+        if(els.previewLive) els.previewLive.classList.add('hidden');
     }
   </script>
 </body>
